@@ -76,7 +76,9 @@ def line(item: dict[str, Any], quotes: dict[str, Any]) -> str:
             + (f"（今日{change:+.2%}）" if change is not None else "") + (f"｜{tier}" if tier else "") + flag)
 
 
-def build_card(date: str, stamp: str, lists: dict[str, list[dict]], quotes: dict[str, Any], summary: dict[str, Any]) -> dict:
+def build_card(date: str, stamp: str, lists: dict[str, list[dict]], quotes: dict[str, Any], summary: dict[str, Any],
+               scans: dict[str, dict] | None = None) -> dict:
+    from screen_reliability import scan_message
     counts = summary["counts"]
     elements = [{"tag": "markdown", "content": (
         f"**{date} {stamp} 盘中数据预选**｜行情：{'、'.join(f'{k}{v}只' for k, v in summary['perSource'].items())}；"
@@ -87,6 +89,9 @@ def build_card(date: str, stamp: str, lists: dict[str, list[dict]], quotes: dict
     for key, title in LISTS:
         items = lists.get(key, [])
         body = "\n".join(line(i, quotes) for i in items) if items else "暂无"
+        health = scan_message({"scan": (scans or {}).get(key, {})})
+        if health:
+            body = health + ("\n" + body if items else "")
         elements.append({"tag": "markdown", "content": f"### {title}（{len(items)}只）\n{body}"})
     elements.append({"tag": "note", "elements": [{"tag": "plain_text", "content": "仅用于观察池研究，不构成投资建议。盘中预选未写入跟踪台账。"}]})
     return {"msg_type": "interactive", "card": {
@@ -140,13 +145,15 @@ def main() -> None:
     run([py, str(ROOT / "scripts" / "screen_v26_unified.py"), "--count", "10",
          "--output", str(out_dir / "v26.md"), "--json-output", str(out_dir / "v26.json")], env)
 
-    lists = {key: json.loads((out_dir / f"{key}.json").read_text(encoding="utf-8")).get("selected", []) for key, _ in LISTS}
+    payloads = {key: json.loads((out_dir / f"{key}.json").read_text(encoding="utf-8")) for key, _ in LISTS}
+    lists = {key: payload.get("selected", []) for key, payload in payloads.items()}
+    scans = {key: payload.get("scan", {}) for key, payload in payloads.items()}
     stamp = "收盘回放" if args.simulate else now.strftime("%H:%M")
     combined = {"date": date, "stamp": stamp, "quotes": summary,
                 "selected": {k: [{"code": i["code"], "name": i["name"], "state": i.get("state")} for i in v] for k, v in lists.items()},
-                "seconds": round(time.time() - started, 1)}
+                "scan": scans, "seconds": round(time.time() - started, 1)}
     (out_dir / "combined.json").write_text(json.dumps(combined, ensure_ascii=False, indent=1), encoding="utf-8")
-    card = build_card(date, stamp, lists, quotes, summary)
+    card = build_card(date, stamp, lists, quotes, summary, scans)
     (out_dir / "feishu-card.json").write_text(json.dumps(card, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[intraday] done in {combined['seconds']}s: " + "，".join(f"{k} {len(v)}" for k, v in lists.items()))
     if args.send and not args.simulate:

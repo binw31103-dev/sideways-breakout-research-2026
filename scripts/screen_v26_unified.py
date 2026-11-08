@@ -34,7 +34,7 @@ from screen_latest_30 import (
 )
 from bottom_base_context import (
     add_trend_features, bottom_base_profile, fundamental_trend, literature_features, literature_score,
-    market_regime, profile_text, trend_text,
+    market_regime, profile_text, trend_text, literature_coverage,
 )
 from screen_red_zone_5 import (
     MARKET_POOL_DEFAULTS,
@@ -55,6 +55,8 @@ from screen_red_zone_5 import (
 )
 
 
+from screen_reliability import primary_scan_health
+
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "v2.6统一横盘启动观察池.md"
 DEFAULT_JSON = ROOT / "output" / "v2.6-unified-observation.json"
@@ -68,14 +70,8 @@ def prepare_rows(code: str, quotes: dict[str, dict]) -> tuple[list[dict], str, f
     rows, source = fetch_kline(code)
     quote = quotes.get(code)
     volume_scale = 1.0
-    if quote and rows[-1]["volume"] > 0 and quote["volume"] > 0:
-        observed_ratio = quote["volume"] / rows[-1]["volume"]
-        volume_scale = min(
-            (0.01, 1.0, 100.0),
-            key=lambda value: abs(math.log(max(observed_ratio, 1e-9) / value)),
-        )
     if AS_OF:
-        # The K-line volume unit (lots vs shares) is the same on past days, so keep the scale.
+        # fetch_kline guarantees shares for every historical row and source.
         return truncate_rows_as_of(rows, AS_OF), f"{source}（回溯至{AS_OF}）", volume_scale
     if quote and quote["date"] >= rows[-1]["date"]:
         aligned = align_quote_volume(rows, quote)
@@ -868,6 +864,7 @@ def main() -> None:
             item.get("literatureFeatures") or {}, item["fundamentalTrend"], item["market"]["totalMarketCap"]
         )
         item["literatureScore"] = literature_score(item["literatureFeatures"])
+        item["literatureCoverage"] = literature_coverage(item["literatureFeatures"])
     # Beyond the state: fundamentals tier 0 (earnings inflection, or improving with falling
     # holder count) first, then the literature composite. Against the old big-up-days/low-price
     # order, picking the top 10 of the day by this rule did as well or better in 2023-07~2024-12,
@@ -925,6 +922,7 @@ def main() -> None:
         "technicalCandidates": technical,
         "diagnostics": diagnostics,
         "failures": failures,
+        "scan": primary_scan_health(len(financials), failures),
     }, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"financials={len(financials)} technical={len(technical)} financialRiskPassed={len(enriched)} selected={len(selected)} failures={len(failures)}")
     print(f"wrote {args.output}")

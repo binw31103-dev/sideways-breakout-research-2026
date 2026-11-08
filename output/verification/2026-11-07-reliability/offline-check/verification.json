@@ -1,0 +1,247 @@
+{
+  "asOf": "2026-11-06",
+  "technicalInvariants": {
+    "screen_v26_unified.py:calculate_metrics": true,
+    "screen_v26_unified.py:strict_condition_checks": true,
+    "screen_v26_unified.py:right_edge_condition_checks": true,
+    "screen_v26_unified.py:startup_confirmation": true,
+    "screen_v13_right_start.py:find_recent_breakout": true,
+    "screen_v13_right_start.py:right_start_candidate": true,
+    "screen_red_zone_5.py:MARKET_POOL_DEFAULTS": true,
+    "screen_red_zone_5.py:macd_metrics": true,
+    "screen_red_zone_5.py:detect_secondary_confirmation": true,
+    "bottom_base_context.py:TRACK_DAYS": true,
+    "bottom_base_context.py:TRACK_DAYS_V13": true,
+    "bottom_base_context.py:STOP_BUFFER": true,
+    "bottom_base_context.py:LAUNCH_GAIN": true,
+    "bottom_base_context.py:literature_score": true,
+    "research/zero_axis_live.py:NEAR_ZERO": true,
+    "research/zero_axis_live.py:MAX_RISE_LOW": true,
+    "research/zero_axis_live.py:MAX_RANGE20": true,
+    "research/zero_axis_live.py:MAX_CHANGE5": true,
+    "research/zero_axis_live.py:MAX_VOLUME_RATIO": true,
+    "research/underwater_cross.py:macd_lines": true,
+    "research/underwater_cross.py:classify": true,
+    "preopen_check.py:SKIP_GAP": true,
+    "preopen_check.py:CAUTION_GAP": true,
+    "preopen_check.py:verdict": true,
+    "screen_v26_unified.py:sort_expressions": true,
+    "screen_v13_right_start.py:sort_expressions": true
+  },
+  "trackingReplay": {
+    "originalRecords": 306,
+    "newEpisodes": 312,
+    "eventCount": 463,
+    "allEventsPreserved": true,
+    "pendingEpisodes": [],
+    "reselectedStocks": [
+      {
+        "key": "v13:002170",
+        "name": "芭田股份",
+        "oldFirst": "2026-07-30",
+        "newFirst": "2026-09-01",
+        "oldStatus": "到期",
+        "newStatus": "到期"
+      },
+      {
+        "key": "v26:600884",
+        "name": "杉杉股份",
+        "oldFirst": "2026-08-31",
+        "newFirst": "2026-11-03",
+        "oldStatus": "破位失效",
+        "newStatus": "跟踪中"
+      },
+      {
+        "key": "v26:601727",
+        "name": "上海电气",
+        "oldFirst": "2026-09-02",
+        "newFirst": "2026-11-04",
+        "oldStatus": "破位失效",
+        "newStatus": "跟踪中"
+      },
+      {
+        "key": "v26:600111",
+        "name": "北方稀土",
+        "oldFirst": "2026-09-02",
+        "newFirst": "2026-10-22",
+        "oldStatus": "破位失效",
+        "newStatus": "跟踪中"
+      },
+      {
+        "key": "v26:603281",
+        "name": "江瀚新材",
+        "oldFirst": "2026-09-04",
+        "newFirst": "2026-10-29",
+        "oldStatus": "破位失效",
+        "newStatus": "跟踪中"
+      },
+      {
+        "key": "v26:300573",
+        "name": "兴齐眼药",
+        "oldFirst": "2026-09-21",
+        "newFirst": "2026-10-23",
+        "oldStatus": "破位失效",
+        "newStatus": "跟踪中"
+      }
+    ]
+  },
+  "ruleComparison": {
+    "scope": "technical strict pool only; no current-cap/fundamental filters, no return inference",
+    "dates": {
+      "2026-08-31": {
+        "evaluated": 416,
+        "counts": {
+          "current": 13,
+          "no_daily_rsi_lower": 13,
+          "daily_rsi_upper_50": 22,
+          "no_weekly_rsi": 19,
+          "oldSimplifiedPool": 395
+        },
+        "extraSimplifiedExamples": [
+          {
+            "code": "000012",
+            "failedChecks": [
+              "weeklyRsi_24_42"
+            ]
+          },
+          {
+            "code": "000027",
+            "failedChecks": [
+              "lowAge_5_35",
+              "volume",
+              "dailyRsi_28_45",
+              "weeklyRsi_24_42"
+            ]
+          },
+          {
+            "code": "000028",
+            "failedChecks": [
+              "lowAge_5_35",
+              "macd"
+            ]
+          }
+        ]
+      },
+      "2026-09-30": {
+        "evaluated": 1248,
+        "counts": {
+          "current": 27,
+          "no_daily_rsi_lower": 27,
+          "daily_rsi_upper_50": 45,
+          "no_weekly_rsi": 31,
+          "oldSimplifiedPool": 1197
+        },
+        "extraSimplifiedExamples": [
+          {
+            "code": "000012",
+            "failedChecks": [
+              "weeklyRsi_24_42",
+              "macd"
+            ]
+          },
+          {
+            "code": "000021",
+            "failedChecks": [
+              "lowAge_5_35",
+              "riseYearLow_lte_15",
+              "structure",
+              "weeklyRsi_24_42",
+              "macd"
+            ]
+          },
+          {
+            "code": "000027",
+            "failedChecks": [
+              "lowAge_5_35",
+              "dailyRsi_28_45",
+              "weeklyRsi_24_42",
+              "macd"
+            ]
+          }
+        ]
+      },
+      "2026-10-30": {
+        "evaluated": 3742,
+        "counts": {
+          "current": 31,
+          "no_daily_rsi_lower": 31,
+          "daily_rsi_upper_50": 40,
+          "no_weekly_rsi": 32,
+          "oldSimplifiedPool": 2204
+        },
+        "extraSimplifiedExamples": [
+          {
+            "code": "000001",
+            "failedChecks": [
+              "lowAge_5_35",
+              "riseYearLow_lte_15",
+              "volume",
+              "dailyRsi_28_45",
+              "weeklyRsi_24_42",
+              "macd"
+            ]
+          },
+          {
+            "code": "000008",
+            "failedChecks": [
+              "lowAge_5_35",
+              "structure",
+              "macd"
+            ]
+          },
+          {
+            "code": "000009",
+            "failedChecks": [
+              "macd"
+            ]
+          }
+        ]
+      },
+      "2026-11-06": {
+        "evaluated": 2268,
+        "counts": {
+          "current": 53,
+          "no_daily_rsi_lower": 53,
+          "daily_rsi_upper_50": 62,
+          "no_weekly_rsi": 58,
+          "oldSimplifiedPool": 1703
+        },
+        "extraSimplifiedExamples": [
+          {
+            "code": "000008",
+            "failedChecks": [
+              "volume"
+            ]
+          },
+          {
+            "code": "000009",
+            "failedChecks": [
+              "volume",
+              "dailyRsi_28_45"
+            ]
+          },
+          {
+            "code": "000012",
+            "failedChecks": [
+              "change5_lte_5",
+              "volume"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "provenance": {
+    "recordedAt": "2026-11-07T21:37:18+08:00",
+    "ruleHashes": {
+      "screen_v13_right_start.py": "ae0ab22b7189a973f0e13bae54205eef1574679d2c0efa970dbd7779b49464b3",
+      "screen_v26_unified.py": "bf89cf631b8eda24c136b2427ace1fe69284bac4870563e01220e65098d5be1f",
+      "screen_red_zone_5.py": "19ccd8af82c79a8b10d37888345c0f141933e9fe72ea4aac7b22f9245adf45a4",
+      "bottom_base_context.py": "2f931f84c8872d613839ca1106e479d446edc3bba25c8119c39bd505ac16f7c2",
+      "screen_reliability.py": "3bc122fdfe9b25f6b1c2bc872520db1248f62d564ed0604b7ddf4133f2067070",
+      "research/underwater_cross.py": "a2bf7c0bb9b14a4534daea11d263eeedbebfff973cd110f66b8c853dcc16cbfb",
+      "research/zero_axis_live.py": "b296659949579e38bcb8b6c2c2e8cd6529023cd6edba0b6fe35c0a33ce75f13f"
+    }
+  },
+  "liveTrackingApplied": false
+}

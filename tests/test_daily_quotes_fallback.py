@@ -53,7 +53,8 @@ class DailyQuotesFallbackTest(unittest.TestCase):
 
     def test_raises_when_all_sources_empty(self) -> None:
         with mock.patch.object(screen_red_zone_5, "fetch_eastmoney_daily_quotes", return_value={}), \
-                mock.patch.object(screen_red_zone_5, "fetch_tencent_daily_quotes", return_value={}):
+                mock.patch.object(screen_red_zone_5, "fetch_tencent_daily_quotes", return_value={}), \
+                mock.patch.object(screen_red_zone_5, "fetch_sina_daily_quotes", return_value={}):
             with self.assertRaises(RuntimeError):
                 fetch_daily_quotes(["600000"])
 
@@ -82,10 +83,10 @@ class AsOfBackfillTest(unittest.TestCase):
             with self.subTest(module=module.__name__), \
                     mock.patch.object(module, "AS_OF", "2026-10-15"), \
                     mock.patch.object(module, "fetch_kline", return_value=([dict(row) for row in self.ROWS], "腾讯前复权日K")):
-                # K-line volume in lots, snapshot volume in shares: the scale must survive backfill.
+                # fetch_kline now guarantees shares before either screener sees the rows.
                 rows, source, scale = module.prepare_rows("600000", {"600000": {"date": "2026-10-16", "volume": 10_000}})
             self.assertEqual(rows[-1]["date"], "2026-10-15")
-            self.assertEqual(scale, 100.0)
+            self.assertEqual(scale, 1.0)
             self.assertIn("回溯", source)
 
     def test_historical_quote_scales_market_cap_to_as_of_close(self) -> None:
@@ -110,12 +111,12 @@ class KlineCacheTest(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
 
     def test_second_call_reads_cache(self) -> None:
-        rows = [{"date": "2000-01-03", "close": 1.0}]
+        rows = [{"date": "2000-01-03", "close": 1.0, "volume": 1.0}]
         with mock.patch.object(self.module, "fetch_kline_uncached", return_value=(rows, "腾讯前复权日K")) as fetch:
             self.module.fetch_kline("600000")
             cached_rows, source = self.module.fetch_kline("600000")
         fetch.assert_called_once()
-        self.assertEqual(cached_rows, rows)
+        self.assertEqual(cached_rows, [{**rows[0], "volume": 100.0}])
         self.assertEqual(source, "腾讯前复权日K")
 
     def test_prune_removes_old_days_only(self) -> None:

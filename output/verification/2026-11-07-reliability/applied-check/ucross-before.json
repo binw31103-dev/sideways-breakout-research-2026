@@ -1,0 +1,79 @@
+{
+ "dataThrough": "2026-11-06",
+ "method": "underwater-cross-G",
+ "days": 1,
+ "selected": [
+  {
+   "code": "600962",
+   "name": "国投中鲁",
+   "industry": "农产品加工",
+   "state": "水下金叉",
+   "totalMarketCap": 17501568976.0,
+   "crossDate": "2026-11-06",
+   "close": 21.58,
+   "lowDate": "2026-11-06",
+   "low": 20.61,
+   "drop": -0.3539184952978056,
+   "riseLow": 0.047064531780689034,
+   "difPct": -0.04061517870885979,
+   "deadCrossSince": false,
+   "fundamentalTrend": {
+    "tier": 2
+   }
+  },
+  {
+   "code": "000620",
+   "name": "盈新发展",
+   "industry": "房地产开发",
+   "state": "水下金叉",
+   "totalMarketCap": 15501591706.0,
+   "crossDate": "2026-11-06",
+   "close": 2.64,
+   "lowDate": "2026-11-02",
+   "low": 2.56,
+   "drop": -0.3535353535353535,
+   "riseLow": 0.03125,
+   "difPct": -0.03864148619368921,
+   "deadCrossSince": false,
+   "fundamentalTrend": {
+    "tier": 2
+   }
+  },
+  {
+   "code": "300252",
+   "name": "金信诺",
+   "industry": "军工电子Ⅱ",
+   "state": "水下金叉",
+   "totalMarketCap": 6274241949.0,
+   "crossDate": "2026-11-06",
+   "close": 9.17,
+   "lowDate": "2026-11-04",
+   "low": 8.74,
+   "drop": -0.5466804979253113,
+   "riseLow": 0.04919908466819223,
+   "difPct": -0.06956691892367572,
+   "deadCrossSince": false,
+   "fundamentalTrend": {
+    "tier": 2
+   }
+  },
+  {
+   "code": "002201",
+   "name": "九鼎新材",
+   "industry": "玻璃玻纤",
+   "state": "水下金叉",
+   "totalMarketCap": 5069729955.0,
+   "crossDate": "2026-11-06",
+   "close": 7.78,
+   "lowDate": "2026-10-28",
+   "low": 7.48,
+   "drop": -0.47231040564373894,
+   "riseLow": 0.04010695187165769,
+   "difPct": -0.04583836876061917,
+   "deadCrossSince": false,
+   "fundamentalTrend": {
+    "tier": 2
+   }
+  }
+ ]
+}

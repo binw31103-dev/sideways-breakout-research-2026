@@ -28,7 +28,6 @@
 from __future__ import annotations
 
 import argparse
-import concurrent.futures
 import json
 import sys
 from pathlib import Path
@@ -53,21 +52,23 @@ def live(as_of: str, json_output: Path | None = None, days: int = 1) -> list[dic
     from screen_latest_30 import ema, fetch_financials
     from screen_red_zone_5 import MARKET_POOL_DEFAULTS, fetch_daily_quotes
     from screen_v26_unified import calculate_metrics, prepare_rows
+    from screen_reliability import scan_candidates, filter_observation_risks
 
     names = fetch_financials(include_financial_yellow=True)
     quotes = fetch_daily_quotes(names.keys())
     limits = MARKET_POOL_DEFAULTS["core"]
 
     def one(code: str) -> dict[str, Any] | None:
-        try:
-            rows, source, volume_scale = prepare_rows(code, quotes)
-        except Exception:
-            return None
+        if code not in quotes:
+            raise ValueError("missing quote")
+        rows, source, volume_scale = prepare_rows(code, quotes)
         rows = [r for r in rows if r["date"] <= as_of]
-        if len(rows) < 200 or rows[-1]["date"] != as_of:
+        if not rows or rows[-1]["date"] != as_of:
+            raise ValueError("K-line does not reach requested date")
+        if len(rows) < 200:
             return None
         if any(r["low"] <= 0 or r["close"] <= 0 for r in rows):
-            return None
+            raise ValueError("invalid nonpositive price")
 
         q = quotes.get(code) or {}
         if (float(q.get("totalMarketCap") or 0) < limits["minTotalMarketCap"]
@@ -132,11 +133,8 @@ def live(as_of: str, json_output: Path | None = None, days: int = 1) -> list[dic
         best["difSeries"] = {"dif": dif[-1], "dea": dea[-1]}
         return best
 
-    results: list[dict[str, Any]] = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        for hit in executor.map(one, sorted(names)):
-            if hit:
-                results.append(hit)
+    results, diagnostics = scan_candidates(sorted(names), one)
+    results = filter_observation_risks(results, names, diagnostics)
 
     for h in results:
         try:
@@ -160,6 +158,8 @@ def live(as_of: str, json_output: Path | None = None, days: int = 1) -> list[dic
                 "maxVolumeRatio": MAX_VOLUME_RATIO,
             },
             "selected": results,
+            "scan": diagnostics,
+            "inputTiming": "K-line as-of; financials and announcements use current available data",
         }, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"as of {as_of}: 零轴金叉 {len(results)} 只")
     return results

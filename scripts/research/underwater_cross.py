@@ -108,18 +108,22 @@ def live(as_of: str, days: int, json_output: Path | None = None) -> list[dict]:
     from screen_latest_30 import fetch_financials
     from screen_red_zone_5 import MARKET_POOL_DEFAULTS, fetch_daily_quotes
     from screen_v26_unified import prepare_rows
+    from screen_reliability import scan_candidates, filter_observation_risks
     names = fetch_financials(include_financial_yellow=True)
     quotes = fetch_daily_quotes(names.keys())
     limits = MARKET_POOL_DEFAULTS["core"]
 
     def one(code: str) -> dict | None:
-        try:
-            rows, _, volume_scale = prepare_rows(code, quotes)
-        except Exception:
-            return None
+        if code not in quotes:
+            raise ValueError("missing quote")
+        rows, _, volume_scale = prepare_rows(code, quotes)
         rows = [r for r in rows if r["date"] <= as_of]
-        if len(rows) < 200 or rows[-1]["date"] != as_of or any(r["low"] <= 0 or r["close"] <= 0 for r in rows):
+        if not rows or rows[-1]["date"] != as_of:
+            raise ValueError("K-line does not reach requested date")
+        if len(rows) < 200:
             return None
+        if any(r["low"] <= 0 or r["close"] <= 0 for r in rows):
+            raise ValueError("invalid nonpositive price")
         q = quotes.get(code) or {}
         if (float(q.get("totalMarketCap") or 0) < limits["minTotalMarketCap"]
                 or float(q.get("floatMarketCap") or 0) < limits["minFloatMarketCap"]
@@ -141,12 +145,9 @@ def live(as_of: str, days: int, json_output: Path | None = None) -> list[dict]:
             "difPct": dif[i] / rows[i]["close"], "deadCrossSince": dif[i] < dea[i],
         }
 
-    hits, scanned = [], 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        for hit in executor.map(one, sorted(names)):
-            scanned += 1
-            if hit:
-                hits.append(hit)
+    hits, diagnostics = scan_candidates(sorted(names), one)
+    scanned = diagnostics["expected"]
+    hits = filter_observation_risks(hits, names, diagnostics)
     for h in hits:
         try:
             h["fundamentalTrend"] = fundamental_trend(h["code"], as_of)
@@ -156,7 +157,8 @@ def live(as_of: str, days: int, json_output: Path | None = None) -> list[dict]:
     if json_output:
         json_output.parent.mkdir(parents=True, exist_ok=True)
         json_output.write_text(json.dumps({"dataThrough": as_of, "method": "underwater-cross-G", "days": days,
-                                           "selected": hits}, ensure_ascii=False, indent=1), encoding="utf-8")
+                                           "selected": hits, "scan": diagnostics,
+                                           "inputTiming": "K-line as-of; financials and announcements use current available data"}, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"as of {as_of}: scanned {scanned}, G crosses in last {days} bars: {len(hits)}")
     for h in hits:
         print(f"{h['code']} {h['name']}｜{h['industry']}｜金叉{h['crossDate']}｜收{h['close']:.2f}｜距低+{h['riseLow']:.1%}"

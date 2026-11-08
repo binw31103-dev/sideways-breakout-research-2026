@@ -1,0 +1,15 @@
+{
+  "createdAt": "2026-11-08T11:19:11.861122+08:00",
+  "scanned": 29791,
+  "sourceCounts": {
+    "腾讯前复权日K": 21608,
+    "新浪日K+新浪复权因子回退": 3258,
+    "新浪不复权+新浪复权因子 比例前复权": 4924,
+    "新浪不复权+东财分红表 比例前复权": 1
+  },
+  "needsMetadataOrConversion": 29791,
+  "lotsToShares": 19943,
+  "failures": [],
+  "applied": true,
+  "backup": "output/cache/volume-backups/pre-shares-20261108.zip"
+}

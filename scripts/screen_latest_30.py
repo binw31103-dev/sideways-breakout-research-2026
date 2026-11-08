@@ -20,6 +20,7 @@ import urllib.parse
 import urllib.request
 from collections import defaultdict
 from pathlib import Path
+from kline_units import load_payload, normalize_payload, write_payload
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_JSON = ROOT / "src" / "data" / "stock-data.json"
@@ -198,7 +199,7 @@ def intraday_kline(code: str) -> tuple[list[dict], str]:
         path = directory / f"{code}.json"
         if not path.exists():
             continue
-        rows = [row for row in json.loads(path.read_text(encoding="utf-8"))["rows"] if row["date"] < INTRADAY_DATE]
+        rows = [row for row in load_payload(path, migrate=True)["rows"] if row["date"] < INTRADAY_DATE]
         if len(rows) < 160:
             continue
         snapshots = sorted(p.stem for p in (KLINE_CACHE_ROOT.parent / "quotes").glob("*.json")) \
@@ -207,10 +208,8 @@ def intraday_kline(code: str) -> tuple[list[dict], str]:
         for day in snapshots:
             if rows[-1]["date"] < day < INTRADAY_DATE and code in _snapshot(day):
                 q = _snapshot(day)[code]
-                reference = sorted(r["volume"] for r in rows[-20:])[10] or 1
-                unit = min((1.0, 0.01, 100.0), key=lambda f: abs(math.log(max(q["volume"] * f, 1) / reference)))
                 rows.append({"date": day, "open": q["open"], "close": q["close"], "high": q["high"],
-                             "low": q["low"], "volume": q["volume"] * unit})
+                             "low": q["low"], "volume": q["volume"]})
                 filled.append(day)
         if previous and rows[-1]["date"] != previous:
             raise ValueError(f"cached K-line ends {rows[-1]['date']}, expected {previous}")
@@ -225,16 +224,15 @@ def fetch_kline(code: str) -> tuple[list[dict], str]:
     path = kline_cache_path(code)
     if path.exists():
         try:
-            cached = json.loads(path.read_text(encoding="utf-8"))
+            cached = load_payload(path, migrate=True)
             return cached["rows"], cached["source"]
         except (ValueError, KeyError):
             pass
     rows, source = fetch_kline_uncached(code)
+    payload = normalize_payload({"source": source, "rows": rows}, code)
+    rows = payload["rows"]
     if dt.datetime.now().time() >= KLINE_CACHE_AFTER or rows[-1]["date"] < dt.date.today().isoformat():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        temp = path.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
-        temp.write_text(json.dumps({"source": source, "rows": rows}, ensure_ascii=False), encoding="utf-8")
-        os.replace(temp, path)
+        write_payload(path, payload)
     return rows, source
 
 
@@ -570,7 +568,7 @@ def analyze(code: str, financial: dict, snapshots: dict[str, dict]) -> dict | No
         return None
 
     elasticity = elasticity_metrics(code, rows)
-    avg_amount20 = sum(row["close"] * row["volume"] * 100 for row in rows[-20:]) / 20
+    avg_amount20 = sum(row["close"] * row["volume"] for row in rows[-20:]) / 20
     volume_ratio = (
         sum(row["volume"] for row in rows[-5:]) / 5
         / max(sum(row["volume"] for row in rows[-20:]) / 20, 1)

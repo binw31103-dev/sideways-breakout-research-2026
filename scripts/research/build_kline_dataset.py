@@ -39,11 +39,14 @@ import datetime as dt
 import json
 import subprocess
 import time
+import sys
 import urllib.parse
 from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+from kline_units import source_volume_unit, normalize_payload, write_payload, load_payload
 OUT = ROOT / "output" / "cache" / "kline_long"
 CHECK_PATH = ROOT / "output" / "cache" / "kline_long_check.json"
 DIVIDENDS_PATH = ROOT / "output" / "cache" / "dividends.json"
@@ -223,7 +226,7 @@ def qfq_shift_days(raw: list[list], qfq: list[list]) -> list[str]:
 def build(code: str, events: list[dict], refresh: bool, tencent_check: bool) -> dict:
     path = OUT / f"{code}.json"
     if path.exists() and not refresh:
-        return json.loads(path.read_text(encoding="utf-8"))["check"]
+        return load_payload(path, migrate=True)["check"]
     raw, source = sina_raw(code), "新浪不复权"
     if len(raw) < 300:
         raw, note = tencent_series(code, "")
@@ -232,6 +235,9 @@ def build(code: str, events: list[dict], refresh: bool, tencent_check: bool) -> 
     if len(raw) < 300:
         check["status"] = "失败"
         return check
+    original_unit = source_volume_unit(source, code)
+    if original_unit == "lots":
+        raw = [r[:5] + [float(r[5]) * 100] + r[6:] for r in raw]
     by_dividends, applied = proportional(raw, events)
     factors = sina_factors(code)
     rows = sina_adjusted(raw, factors) if factors else by_dividends
@@ -254,10 +260,9 @@ def build(code: str, events: list[dict], refresh: bool, tencent_check: bool) -> 
     if any(r["low"] <= 0 or r["close"] <= 0 for r in rows):
         check["status"] += "/含非正价格"
     OUT.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
     adjust = "新浪复权因子" if factors else "东财分红表"
-    tmp.write_text(json.dumps({"source": f"{source}+{adjust} 比例前复权", "check": check, "rows": rows}, ensure_ascii=False), encoding="utf-8")
-    tmp.replace(path)
+    write_payload(path, normalize_payload({"source": f"{source}+{adjust} 比例前复权", "check": check,
+                  "volumeUnit": "shares", "sourceVolumeUnit": original_unit, "rows": rows}, code))
     return check
 
 

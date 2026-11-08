@@ -73,15 +73,8 @@ def moving_average(values: list[float], period: int, end: int | None = None) -> 
 
 
 def align_quote_volume(rows: list[dict], quote: dict) -> dict:
-    """Align a closing snapshot's volume unit with the historical K-line source."""
-    reference = statistics.median(row["volume"] for row in rows[-20:] if row["volume"] > 0)
-    raw_volume = float(quote["volume"])
-    candidates = (raw_volume, raw_volume / 100, raw_volume * 100)
-    aligned_volume = min(
-        candidates,
-        key=lambda value: abs(math.log(max(value, 1) / max(reference, 1))),
-    )
-    return {**quote, "volume": aligned_volume}
+    """Both normalized K-lines and snapshots use shares; never infer units from volume size."""
+    return {**quote, "volume": float(quote["volume"])}
 
 
 def macd_metrics(values: list[float]) -> dict:
@@ -553,7 +546,9 @@ def fetch_financial_detail(code: str) -> dict:
     }
     url = "https://datacenter-web.eastmoney.com/api/data/v1/get?" + urllib.parse.urlencode(params)
     rows = ((get_json(url).get("result") or {}).get("data") or [])
-    return rows[0] if rows else {}
+    if not rows:
+        raise RuntimeError(f"financial detail unavailable for {code}")
+    return rows[0]
 
 
 def classify_announcement_rows(rows: list[dict]) -> dict[str, list[dict]]:
@@ -604,7 +599,10 @@ def fetch_risk_announcements(code: str) -> dict[str, list[dict]]:
             }
         )
     )
-    rows = ((get_json(url).get("data") or {}).get("list") or [])
+    data = get_json(url).get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("list"), list):
+        raise RuntimeError(f"announcement response unavailable for {code}")
+    rows = data["list"]
     return classify_announcement_rows(rows)
 
 
@@ -698,12 +696,6 @@ def analyze(
         diagnostic_context["source"] = source
     quote = quotes.get(code)
     kline_volume_to_shares = 1.0
-    if quote and rows[-1]["volume"] > 0 and quote["volume"] > 0:
-        observed_ratio = quote["volume"] / rows[-1]["volume"]
-        kline_volume_to_shares = min(
-            (0.01, 1.0, 100.0),
-            key=lambda value: abs(math.log(max(observed_ratio, 1e-9) / value)),
-        )
     if quote and quote["date"] >= rows[-1]["date"]:
         quote = align_quote_volume(rows, quote)
         if quote["date"] == rows[-1]["date"]:

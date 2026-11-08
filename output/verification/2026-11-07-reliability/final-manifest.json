@@ -1,0 +1,33 @@
+{
+  "protectedFilesUnchanged": {
+    "output/intraday/consistency.jsonl": true,
+    "README.md": true,
+    "需求文档.md": true,
+    "四类策略说明-2026-11-07.md": true,
+    "当前筛选逻辑-v2.7.txt": true,
+    "策略数据快照-2026-11-06.json": true
+  },
+  "currentHashes": {
+    "scripts/run_daily_screen_and_notify.py": "5034bad0e06d7042224cdc333122d9529c9ca555c944a4759398caa9da70186f",
+    "scripts/research/underwater_cross.py": "0521b65f132f12853f2ffbe436059400f6805f1e69fd70e3586a70bfd00908fd",
+    "scripts/research/zero_axis_live.py": "77dd09ec531a682740db42c992d0a10d34eb1d69c4c82cfc2cb92cf6c5748074",
+    "scripts/preopen_check.py": "ca069d4dc68ed4a3f2d7580d400d1bd9a0f4275c922c4b502493db06badb39d5",
+    "scripts/screen_red_zone_5.py": "19ccd8af82c79a8b10d37888345c0f141933e9fe72ea4aac7b22f9245adf45a4",
+    "scripts/screen_v26_unified.py": "d5f2e47a6d421d8c858dcb9770ece35c3c4486f648e3532f9229cabce798d4b4",
+    "scripts/screen_v13_right_start.py": "f63faadee2d75259809ca84003ae42519882aee62e498d327f14be76f9a0cdfc",
+    "scripts/bottom_base_context.py": "2f931f84c8872d613839ca1106e479d446edc3bba25c8119c39bd505ac16f7c2",
+    "scripts/sync_feishu_bitable.py": "2c64f547477c9765f2f7103d32e5099511494146f1ce187e557cf91a0e863417",
+    "scripts/intraday_screen.py": "1ea5b14f6dbd4e04d5d0fc8f29ad3c3fc351ec163fb060b8b969c6a004dcfb7c",
+    "output/daily/tracking.json": "bdd3c7bcbe80b67e3827e29902ab9cc7762d978394dad3fd60741f8a2b508fee",
+    "output/intraday/consistency.jsonl": "16d95c2bb684fc5c5f365c6d0e774e7afbed3d885346326ae33d0405e44ad05e",
+    "README.md": "1b11b3792b279d73e7d93cdc59a289c72a0777bf10c9a7bbc76eddbfa03f0aac",
+    "需求文档.md": "974cada5ab9c42a4652a6f9ea7168f6264ee4976df6ec1e99f3a3c49e82f9b54",
+    "四类策略说明-2026-11-07.md": "3d4df99d67a6a19ff0e0dc7bcf2c2a30b5752910f2421ae50b4a3476dcb7146c",
+    "当前筛选逻辑-v2.7.txt": "bce1bc08eb29fe72f399377587cda26c3a07f0d92fb00adb51a816957c5dce23",
+    "策略数据快照-2026-11-06.json": "8b972c54ca987b6ee44987bb6ce40f2de9cf539936df93d69deda6b01e14f0f4",
+    "scripts/screen_reliability.py": "7a7caaeffe7538cbecae33205efa7bcccdaf56953183f375f57069567b4d7ac4",
+    "scripts/verify_reliability.py": "7e92a73bd457849d5b74e44f596a1f108823e1c000ef9150afb3efcf1899e014",
+    "scripts/research/v26_rule_comparison.py": "18b54a4f56778452e1f7953cc912b0b33a536b4f6fce39d38ea2000e9f66cc62",
+    "tests/test_reliability.py": "cbb15efa13840a4db2bfdaa123ff751c51ccb6b36b32049b227d93e32410c35e"
+  }
+}

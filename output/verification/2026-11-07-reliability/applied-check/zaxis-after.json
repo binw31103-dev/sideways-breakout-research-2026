@@ -1,0 +1,278 @@
+{
+ "dataThrough": "2026-11-06",
+ "method": "zero-axis-near-cross",
+ "days": 1,
+ "criteria": {
+  "nearZeroPct": 1.0,
+  "maxRiseLowPct": 8.0,
+  "maxRange20Pct": 12.0,
+  "maxChange5Pct": 3.0,
+  "maxVolumeRatio": 1.2
+ },
+ "selected": [],
+ "scan": {
+  "status": "partial",
+  "expected": 5031,
+  "succeeded": 4968,
+  "failed": 63,
+  "technicalHits": 0,
+  "failures": [
+   {
+    "code": "000831",
+    "error": "missing quote"
+   },
+   {
+    "code": "001232",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001232.json'"
+   },
+   {
+    "code": "001235",
+    "error": "missing quote"
+   },
+   {
+    "code": "001237",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001237.json'"
+   },
+   {
+    "code": "001246",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001246.json'"
+   },
+   {
+    "code": "001248",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001248.json'"
+   },
+   {
+    "code": "001257",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001257.json'"
+   },
+   {
+    "code": "001312",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001312.json'"
+   },
+   {
+    "code": "001365",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001365.json'"
+   },
+   {
+    "code": "001381",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001381.json'"
+   },
+   {
+    "code": "001393",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001393.json'"
+   },
+   {
+    "code": "001399",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/001399.json'"
+   },
+   {
+    "code": "002129",
+    "error": "missing quote"
+   },
+   {
+    "code": "002623",
+    "error": "missing quote"
+   },
+   {
+    "code": "301513",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301513.json'"
+   },
+   {
+    "code": "301531",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301531.json'"
+   },
+   {
+    "code": "301569",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301569.json'"
+   },
+   {
+    "code": "301583",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301583.json'"
+   },
+   {
+    "code": "301599",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301599.json'"
+   },
+   {
+    "code": "301655",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301655.json'"
+   },
+   {
+    "code": "301660",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301660.json'"
+   },
+   {
+    "code": "301666",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301666.json'"
+   },
+   {
+    "code": "301669",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301669.json'"
+   },
+   {
+    "code": "301677",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301677.json'"
+   },
+   {
+    "code": "301682",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301682.json'"
+   },
+   {
+    "code": "301683",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301683.json'"
+   },
+   {
+    "code": "301686",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301686.json'"
+   },
+   {
+    "code": "301688",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301688.json'"
+   },
+   {
+    "code": "301689",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301689.json'"
+   },
+   {
+    "code": "301696",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301696.json'"
+   },
+   {
+    "code": "301697",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301697.json'"
+   },
+   {
+    "code": "301699",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301699.json'"
+   },
+   {
+    "code": "301707",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301707.json'"
+   },
+   {
+    "code": "301716",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301716.json'"
+   },
+   {
+    "code": "301717",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301717.json'"
+   },
+   {
+    "code": "301718",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/301718.json'"
+   },
+   {
+    "code": "601091",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/601091.json'"
+   },
+   {
+    "code": "601123",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/601123.json'"
+   },
+   {
+    "code": "603293",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/603293.json'"
+   },
+   {
+    "code": "603407",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/603407.json'"
+   },
+   {
+    "code": "603435",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/603435.json'"
+   },
+   {
+    "code": "603448",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/603448.json'"
+   },
+   {
+    "code": "603459",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/603459.json'"
+   },
+   {
+    "code": "603468",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/603468.json'"
+   },
+   {
+    "code": "688143",
+    "error": "invalid nonpositive price"
+   },
+   {
+    "code": "688173",
+    "error": "invalid nonpositive price"
+   },
+   {
+    "code": "688635",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688635.json'"
+   },
+   {
+    "code": "688781",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688781.json'"
+   },
+   {
+    "code": "688797",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688797.json'"
+   },
+   {
+    "code": "688801",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688801.json'"
+   },
+   {
+    "code": "688806",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688806.json'"
+   },
+   {
+    "code": "688808",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688808.json'"
+   },
+   {
+    "code": "688811",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688811.json'"
+   },
+   {
+    "code": "688813",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688813.json'"
+   },
+   {
+    "code": "688820",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688820.json'"
+   },
+   {
+    "code": "688825",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688825.json'"
+   },
+   {
+    "code": "688826",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688826.json'"
+   },
+   {
+    "code": "688827",
+    "error": "missing quote"
+   },
+   {
+    "code": "688828",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688828.json'"
+   },
+   {
+    "code": "688835",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688835.json'"
+   },
+   {
+    "code": "688836",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688836.json'"
+   },
+   {
+    "code": "688837",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/688837.json'"
+   },
+   {
+    "code": "689009",
+    "error": "[Errno 2] No such file or directory: 'output/cache/kline/2026-11-07/689009.json'"
+   }
+  ],
+  "riskRejected": [],
+  "riskFailures": [],
+  "selected": 0
+ },
+ "inputTiming": "K-line as-of; financials and announcements use current available data"
+}

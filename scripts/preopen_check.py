@@ -105,17 +105,21 @@ def verdict(gap: float) -> str:
     return "按计划"
 
 
-def build(signal_date: str, report: dict[str, Any], quotes: dict[str, dict[str, Any]], today: str) -> dict[str, Any]:
+def build(signal_date: str, report: dict[str, Any], quotes: dict[str, dict[str, Any]], today: str,
+          checked_at: str = "09:50") -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     for key, title in LISTS:
         for item in (report.get(key) or {}).get("selected", []):
             q = quotes.get(item["code"]) or {}
-            auction = q.get("open") or q.get("price") or 0
+            stamp = str(q.get("time") or "")[:5]
+            valid = q.get("date") == today and "09:25" <= stamp <= min(checked_at, "09:50")
+            auction = (q.get("open") or 0) if valid else 0
             prev = q.get("prevClose") or float(item.get("close") or 0)
             gap = auction / prev - 1 if auction and prev else None
             rows.append({"list": key, "title": title, "code": item["code"], "name": item["name"],
                          "state": item.get("state", ""), "prevClose": prev, "auction": auction, "gap": gap,
-                         "verdict": verdict(gap) if gap is not None else "行情缺失"})
+                         "quoteDate": q.get("date"), "quoteTime": q.get("time"),
+                         "verdict": verdict(gap) if gap is not None else "行情待核（日期、时间或开盘价无效）"})
     return {"date": today, "signalDate": signal_date, "rows": rows,
             "source": "/".join(sorted({q.get("source", "") for q in quotes.values()})) or "无"}
 
@@ -173,7 +177,7 @@ def main() -> None:
     if not quotes or not any(q.get("date") == today for q in quotes.values()):
         print(f"skip: no quotes dated {today} (holiday or feed down)")
         return
-    result = build(signal_date, report, quotes, today)
+    result = build(signal_date, report, quotes, today, now.strftime("%H:%M"))
     out_dir = DAILY_ROOT / today
     out_dir.mkdir(parents=True, exist_ok=True)
     payload = card(result)

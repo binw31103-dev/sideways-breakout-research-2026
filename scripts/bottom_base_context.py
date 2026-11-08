@@ -129,6 +129,14 @@ def literature_score(features: dict[str, float]) -> float:
     return statistics.mean(parts) if parts else 0.5
 
 
+def literature_coverage(features: dict[str, float]) -> dict[str, Any]:
+    """Display missing inputs without changing the existing score or sort order."""
+    if _REFERENCE is None:
+        literature_score(features)
+    missing = [name for name in LITERATURE_SIGNS if name not in features or not _REFERENCE.get(name)]
+    return {"available": len(LITERATURE_SIGNS) - len(missing), "total": len(LITERATURE_SIGNS), "missing": missing}
+
+
 DATACENTER = "https://datacenter-web.eastmoney.com/api/data/v1/get?"
 
 
@@ -368,6 +376,9 @@ def follow_up(record: dict[str, Any], as_of: str, track_days: int = TRACK_DAYS, 
     if not final and max_up >= LAUNCH_GAIN:
         status = "启动中"
     last = rows[end]
+    if not final and last["date"] != as_of:
+        return {"status": "数据待复核", "final": False, "dataThrough": last["date"],
+                "error": "K-line does not reach requested follow-up date"}
     status_date = last["date"]
     return {
         "status": status,

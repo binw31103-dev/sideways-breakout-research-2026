@@ -61,14 +61,8 @@ def prepare_rows(code: str, quotes: dict[str, dict]) -> tuple[list[dict], str, f
     rows, source = fetch_kline(code)
     quote = quotes.get(code)
     volume_scale = 1.0
-    if quote and rows[-1]["volume"] > 0 and quote["volume"] > 0:
-        observed_ratio = quote["volume"] / rows[-1]["volume"]
-        volume_scale = min(
-            (0.01, 1.0, 100.0),
-            key=lambda value: abs(math.log(max(observed_ratio, 1e-9) / value)),
-        )
     if AS_OF:
-        # The K-line volume unit (lots vs shares) is the same on past days, so keep the scale.
+        # fetch_kline guarantees shares for every historical row and source.
         return truncate_rows_as_of(rows, AS_OF), f"{source}（回溯至{AS_OF}）", volume_scale
     if quote and quote["date"] >= rows[-1]["date"]:
         aligned = align_quote_volume(rows, quote)

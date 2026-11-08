@@ -1,0 +1,21 @@
+{
+  "compared": 4970,
+  "liquidityGateFlips": [],
+  "volumeRatioChanges": [
+    {
+      "code": "600327",
+      "oldRatio": 2.536067171091022,
+      "newRatio": 2.9147442193826194,
+      "oldAmount": 107424634.42750001,
+      "newAmount": 152054866.25500003
+    },
+    {
+      "code": "688429",
+      "oldRatio": 1.3197962623989905,
+      "newRatio": 2.2208222363331225,
+      "oldAmount": 14318797.5135,
+      "newAmount": 24164388.4995
+    }
+  ],
+  "strictTechnicalGateFlips": []
+}

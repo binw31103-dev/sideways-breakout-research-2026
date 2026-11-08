@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from bottom_base_context import (  # noqa: E402
     TRACK_DAYS, TRACK_DAYS_V13, follow_up, profile_text, report_due, trend_text,
 )
+from screen_reliability import scan_message, rule_provenance, signal_overlap  # noqa: E402
 # Low-position underwater golden cross (600406 pattern): observed 40 days without the base-break
 # stop, because most such cases dip below the low before resolving (underwater-cross-cases.md).
 TRACK_DAYS_UCROSS = 40
@@ -86,7 +88,19 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def save_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def record_follow_up(record: dict[str, Any], date: str) -> dict[str, Any]:
+    model = record["model"]
+    horizon = {"v13": TRACK_DAYS_V13, "ucross": TRACK_DAYS_UCROSS,
+               "zaxis": TRACK_DAYS_ZAXIS}.get(model, TRACK_DAYS)
+    return follow_up(record, date, horizon, use_stop=model == "v26")
 
 
 def update_tracking(models: list[tuple[str, dict[str, Any]]], date: str) -> dict[str, Any]:
@@ -96,6 +110,19 @@ def update_tracking(models: list[tuple[str, dict[str, Any]]], date: str) -> dict
         for item in payload.get("selected", []):
             key = f"{model_key}:{item['code']}"
             close = float(item["close"])
+            previous = records.get(key)
+            if previous and date > previous.get("lastSelectedDate", previous["firstSelectedDate"]):
+                ending = previous.get("followUp") or {}
+                if not ending.get("final"):
+                    ending = record_follow_up(previous, date)
+                if ending.get("final") and ending.get("statusDate", date) < date:
+                    archive_key = f"{key}@{previous['firstSelectedDate']}"
+                    if archive_key in records:
+                        raise RuntimeError(f"duplicate tracking episode: {archive_key}")
+                    previous["followUp"] = ending
+                    previous["episodeId"] = archive_key
+                    records[archive_key] = previous
+                    del records[key]
             record = records.setdefault(key, {
                 "model": model_key,
                 "code": item["code"],
@@ -104,6 +131,8 @@ def update_tracking(models: list[tuple[str, dict[str, Any]]], date: str) -> dict
                 "firstClose": close,
                 "selectedCount": 0,
                 "history": [],
+                "episodeId": f"{key}@{date}",
+                "entryBasis": "signal_close",
             })
             event = {"date": date, "close": close, "state": item.get("state")}
             # Keyed by date so backfilled days slot into place in any run order.
@@ -124,6 +153,7 @@ def update_tracking(models: list[tuple[str, dict[str, Any]]], date: str) -> dict
                 "changeSinceFirst": change,
                 "selectedCount": record["selectedCount"],
             }
+    tracking["version"] = 2
     tracking["updatedAt"] = dt.datetime.now().astimezone().isoformat(timespec="seconds")
     save_json(TRACKING_PATH, tracking)
     return tracking
@@ -135,22 +165,39 @@ def refresh_follow_ups(tracking: dict[str, Any], date: str) -> dict[str, list[di
     horizon = (dt.date.fromisoformat(date) - dt.timedelta(days=TRACK_DAYS * 2)).isoformat()
     by_model: dict[str, list[dict[str, Any]]] = {"v13": [], "v26": [], "ucross": [], "zaxis": []}
     for record in tracking.get("records", {}).values():
-        if record.get("model") not in by_model or not horizon <= record["firstSelectedDate"] <= date:
+        if record.get("model") not in by_model or record["firstSelectedDate"] > date:
+            continue
+        if record["firstSelectedDate"] < horizon and (record.get("followUp") or {}).get("final"):
             continue
         try:
-            if record["model"] == "v13":
-                record["followUp"] = follow_up(record, date, TRACK_DAYS_V13, use_stop=False)
-            elif record["model"] == "ucross":
-                record["followUp"] = follow_up(record, date, TRACK_DAYS_UCROSS, use_stop=False)
-            elif record["model"] == "zaxis":
-                record["followUp"] = follow_up(record, date, TRACK_DAYS_ZAXIS, use_stop=False)
-            else:
-                record["followUp"] = follow_up(record, date)
+            record["followUp"] = record_follow_up(record, date)
         except Exception as exc:
             record["followUp"] = {"status": "数据待复核", "final": False, "error": str(exc)}
         by_model[record["model"]].append(record)
     save_json(TRACKING_PATH, tracking)
     return {model: sorted(rows, key=lambda r: r["firstSelectedDate"]) for model, rows in by_model.items()}
+
+
+def run_observation_scan(command: list[str], path: Path, date: str, run_id: str) -> dict[str, Any]:
+    """Only accept a fresh output from this invocation, never yesterday's/same-day old file."""
+    temporary = path.with_name(f".{path.stem}-{run_id}.json")
+    try:
+        run_command([*command, "--json-output", str(temporary)])
+        payload = load_json(temporary)
+        if (payload.get("dataThrough") != date or not isinstance(payload.get("selected"), list)
+                or (payload.get("scan") or {}).get("status") not in {"success", "partial", "failed"}):
+            raise RuntimeError("scan output has missing health metadata or wrong data date")
+        if payload["scan"]["status"] == "failed":
+            payload["selected"] = []
+    except Exception as exc:
+        payload = {"dataThrough": date, "selected": [], "scan": {
+            "status": "failed", "expected": 0, "succeeded": 0, "failed": 0, "error": str(exc)}}
+        print(f"[{path.stem}] scan failed: {exc}", file=sys.stderr)
+    finally:
+        temporary.unlink(missing_ok=True)
+    payload["runId"] = run_id
+    save_json(path, payload)
+    return payload
 
 
 def annotate_report_due(lists: list[list[dict[str, Any]]], date: str) -> None:
@@ -305,7 +352,9 @@ def common_factor_lines(item: dict[str, Any]) -> list[str]:
         profile_text(item.get("baseProfile")),
         trend_text(item.get("fundamentalTrend")) + (
             f"｜文献合成分 {float(item['literatureScore']):.0%}" if item.get("literatureScore") is not None else ""
-        ),
+        ) + (f"｜因子覆盖 {item['literatureCoverage']['available']}/{item['literatureCoverage']['total']}"
+             if item.get("literatureCoverage") else "")
+        + ("｜基本面数据待核" if (item.get("fundamentalTrend") or {}).get("error") else ""),
         (
             f"财务 {item.get('financialState', '待核')}｜风险 {item.get('riskState', '待核')}｜"
             f"{risk_summary(item)}"
@@ -348,6 +397,7 @@ def ucross_line(item: dict[str, Any]) -> str:
         f"低点 {item['lowDate']} {float(item['low']):.2f}（距低+{item['riseLow']:.1%}）｜前期跌{item['drop']:+.0%}｜"
         f"{tier_text}｜净利同比 {'待核' if yoy is None else f'{yoy:+.0f}%'}"
         + ("｜已再次死叉" if item.get("deadCrossSince") else "")
+        + (f"｜财务{item['financialState']}｜风险{item['riskState']}" if "riskState" in item else "")
     )
 
 
@@ -367,6 +417,7 @@ def zaxis_line(item: dict[str, Any]) -> str:
         f"20日振幅 {float(item.get('range20', 0)):.1f}%｜5日涨幅 {float(item.get('change5', 0)):+.1f}%｜"
         f"量比 {float(item.get('volumeRatio', 0)):.2f}｜日RSI {float(item.get('dailyRsi', 0)):.1f}｜"
         f"{tier_text}｜净利同比 {'待核' if yoy is None else f'{yoy:+.0f}%'}"
+        + (f"｜财务{item['financialState']}｜风险{item['riskState']}" if "riskState" in item else "")
     )
 
 
@@ -406,7 +457,9 @@ def build_feishu_card(
         for index, item in enumerate(featured, 1):
             elements.append({"tag": "markdown", "content": stock_block(item, index, "v13")})
     else:
-        elements.append({"tag": "markdown", "content": f"今日没有满足{DISPLAY_NAMES['v13']}条件的股票。"})
+        elements.append({"tag": "markdown", "content": scan_message(v13) or f"今日没有满足{DISPLAY_NAMES['v13']}条件的股票。"})
+    if featured and scan_message(v13):
+        elements.append({"tag": "markdown", "content": scan_message(v13)})
     if others:
         elements.append({"tag": "markdown", "content": f"### 其他{DISPLAY_NAMES['v13']}观察（基本面未达优先）\n" + "\n".join(brief_line(i) for i in others)})
     elements.append({"tag": "hr"})
@@ -415,20 +468,29 @@ def build_feishu_card(
         for index, item in enumerate(pool, 1):
             elements.append({"tag": "markdown", "content": stock_block(item, index, "v26")})
     else:
-        elements.append({"tag": "markdown", "content": f"今日没有股票满足{DISPLAY_NAMES['v26']}条件。"})
+        elements.append({"tag": "markdown", "content": scan_message(unified) or f"今日没有股票满足{DISPLAY_NAMES['v26']}条件。"})
+    if pool and scan_message(unified):
+        elements.append({"tag": "markdown", "content": scan_message(unified)})
     ucross_items = (ucross or {}).get("selected", [])
     elements.append({"tag": "hr"})
     elements.append({"tag": "markdown", "content": (
         f"### {DISPLAY_NAMES['ucross']}（国电南瑞式，{len(ucross_items)}只）\n{UCROSS_NOTE}\n"
-        + ("\n".join(ucross_line(i) for i in ucross_items) if ucross_items else f"今日没有新出现的{DISPLAY_NAMES['ucross']}。")
+        + ((scan_message(ucross) + "\n") if scan_message(ucross) else "")
+        + ("\n".join(ucross_line(i) for i in ucross_items) if ucross_items else "" if scan_message(ucross) else f"今日没有新出现的{DISPLAY_NAMES['ucross']}。")
     )})
     zaxis_items = (zaxis or {}).get("selected", [])
     elements.append({"tag": "hr"})
     elements.append({"tag": "markdown", "content": (
         f"### {DISPLAY_NAMES['zaxis']}（{len(zaxis_items)}只）\n{ZAXIS_NOTE}\n"
-        + ("\n".join(zaxis_line(i) for i in zaxis_items) if zaxis_items else f"今日没有新出现的{DISPLAY_NAMES['zaxis']}。")
+        + ((scan_message(zaxis) + "\n") if scan_message(zaxis) else "")
+        + ("\n".join(zaxis_line(i) for i in zaxis_items) if zaxis_items else "" if scan_message(zaxis) else f"今日没有新出现的{DISPLAY_NAMES['zaxis']}。")
     )})
     elements.append({"tag": "hr"})
+    overlap = signal_overlap({"v13": v13, "v26": unified, "ucross": ucross or {}, "zaxis": zaxis or {}})
+    elements.append({"tag": "markdown", "content": (
+        f"信号{overlap['signalCount']}条，去重后{overlap['uniqueStockCount']}只。"
+        + " ".join(f"{code}：{'/'.join(DISPLAY_NAMES[k] for k in keys)}" for code, keys in overlap["overlaps"].items())
+    )})
     elements.append({"tag": "markdown", "content": (
         "### 跟踪\n"
         f"**{DISPLAY_NAMES['v13']}（{TRACK_DAYS_V13}日，不设破位）**\n" + "\n".join(follow_up_card_lines(follow_ups.get("v13", []), date))
@@ -513,21 +575,31 @@ def render_combined_report(
         f"## {DISPLAY_NAMES['v13']}（{TRACK_DAYS_V13}日观察）",
         "",
     ]
-    lines += [block for index, item in enumerate(featured, 1) for block in (stock_block(item, index, "v13"), "")] or [f"今日没有满足{DISPLAY_NAMES['v13']}条件的股票。", ""]
+    if scan_message(v13):
+        lines += [scan_message(v13), ""]
+    lines += [block for index, item in enumerate(featured, 1) for block in (stock_block(item, index, "v13"), "")] or ([] if scan_message(v13) else [f"今日没有满足{DISPLAY_NAMES['v13']}条件的股票。", ""])
     lines += ["", f"## {DISPLAY_NAMES['v26']}（观察、不作入场依据）", ""]
-    lines += [block for index, item in enumerate(unified.get("selected", []), 1) for block in (stock_block(item, index, "v26"), "")] or ["当日无完整满足样本。", ""]
+    if scan_message(unified):
+        lines += [scan_message(unified), ""]
+    lines += [block for index, item in enumerate(unified.get("selected", []), 1) for block in (stock_block(item, index, "v26"), "")] or ([] if scan_message(unified) else ["当日无完整满足样本。", ""])
     ucross_items = (ucross or {}).get("selected", [])
     lines += [f"## {DISPLAY_NAMES['ucross']}（国电南瑞式）", "", UCROSS_NOTE, ""]
-    lines += [f"- {ucross_line(item)}" for item in ucross_items] or [f"- 今日没有新出现的{DISPLAY_NAMES['ucross']}。"]
+    if scan_message(ucross):
+        lines.append(f"- {scan_message(ucross)}")
+    lines += [f"- {ucross_line(item)}" for item in ucross_items] or ([] if scan_message(ucross) else [f"- 今日没有新出现的{DISPLAY_NAMES['ucross']}。"])
     lines.append("")
     zaxis_items = (zaxis or {}).get("selected", [])
     lines += [f"## {DISPLAY_NAMES['zaxis']}", "", ZAXIS_NOTE, ""]
-    lines += [f"- {zaxis_line(item)}" for item in zaxis_items] or [f"- 今日没有新出现的{DISPLAY_NAMES['zaxis']}。"]
+    if scan_message(zaxis):
+        lines.append(f"- {scan_message(zaxis)}")
+    lines += [f"- {zaxis_line(item)}" for item in zaxis_items] or ([] if scan_message(zaxis) else [f"- 今日没有新出现的{DISPLAY_NAMES['zaxis']}。"])
     lines.append("")
     for title, key in ((f"{DISPLAY_NAMES['v13']}（{TRACK_DAYS_V13}日，不设破位）", "v13"), (f"{DISPLAY_NAMES['v26']}（{TRACK_DAYS}日，跌破5%失效）", "v26"),
                        (f"{DISPLAY_NAMES['ucross']}（{TRACK_DAYS_UCROSS}日，不设破位）", "ucross"),
                        (f"{DISPLAY_NAMES['zaxis']}（{TRACK_DAYS_ZAXIS}日，不设破位）", "zaxis")):
         lines += [f"## 跟踪：{title}", "", *[f"- {line}" for line in follow_up_lines(follow_ups.get(key, []), date)], ""]
+    overlap = signal_overlap({"v13": v13, "v26": unified, "ucross": ucross or {}, "zaxis": zaxis or {}})
+    lines += [f"信号 {overlap['signalCount']} 条，去重后 {overlap['uniqueStockCount']} 只；同票多策略不算独立样本。", ""]
     lines.append("本报告只用于观察池研究，不构成投资建议。")
     return "\n".join(lines) + "\n"
 
@@ -563,6 +635,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    run_id = uuid.uuid4().hex
     if args.resend_date:
         resend_date = dt.date.fromisoformat(args.resend_date).isoformat()
         card_path = DAILY_ROOT / resend_date / "feishu-card.json"
@@ -590,8 +663,9 @@ def main() -> None:
 
     from screen_latest_30 import prune_kline_cache
 
-    prune_kline_cache()
-    daily_dir = DAILY_ROOT / date
+    if not args.backfill:
+        prune_kline_cache()
+    daily_dir = DAILY_ROOT / (f"backfill-{date}-{run_id[:8]}" if args.backfill else date)
     daily_dir.mkdir(parents=True, exist_ok=True)
     unified_json = daily_dir / "v26.json"
     unified_md = daily_dir / "v26.md"
@@ -624,27 +698,19 @@ def main() -> None:
         delay_seconds=args.retry_delay_seconds,
     )
 
-    # Observation lists; a failure here must not block the main report.
+    # Observation failures are explicit in the report and never reuse an existing file.
     ucross_json = daily_dir / "ucross.json"
-    try:
-        run_command([
-            sys.executable, str(ROOT / "scripts" / "research" / "underwater_cross.py"), "live",
-            "--as-of", date, "--days", "1", "--json-output", str(ucross_json),
-        ])
-    except Exception as exc:
-        print(f"[ucross] skipped: {exc}", file=sys.stderr)
+    ucross = run_observation_scan([
+        sys.executable, str(ROOT / "scripts" / "research" / "underwater_cross.py"), "live",
+        "--as-of", date, "--days", "1",
+    ], ucross_json, date, run_id)
     zaxis_json = daily_dir / "zaxis.json"
-    try:
-        run_command([
-            sys.executable, str(ROOT / "scripts" / "research" / "zero_axis_live.py"),
-            "--as-of", date, "--days", "1", "--json-output", str(zaxis_json),
-        ])
-    except Exception as exc:
-        print(f"[zaxis] skipped: {exc}", file=sys.stderr)
+    zaxis = run_observation_scan([
+        sys.executable, str(ROOT / "scripts" / "research" / "zero_axis_live.py"),
+        "--as-of", date, "--days", "1",
+    ], zaxis_json, date, run_id)
     unified = load_json(unified_json)
     v13 = load_json(v13_json)
-    ucross = load_json(ucross_json) if ucross_json.exists() else {"selected": []}
-    zaxis = load_json(zaxis_json) if zaxis_json.exists() else {"selected": []}
     # A quote snapshot that only covers part of the market shows up as thousands of "data"
     # rejections and an empty pick list (2026-11-02). Refuse to publish that as "0 stocks".
     stages = (unified.get("diagnostics") or {}).get("stageCounts") or {}
@@ -673,9 +739,14 @@ def main() -> None:
 
     annotate_report_due([unified.get("selected", []), v13.get("selected", []), ucross.get("selected", []),
                          zaxis.get("selected", [])], data_date)
-    ucross["intradayCheck"] = intraday_check(data_date, {"v13": v13.get("selected", []), "ucross": ucross.get("selected", []),
-                                                          "v26": unified.get("selected", []),
-                                                          "zaxis": zaxis.get("selected", [])})
+    if not args.backfill:
+        ucross["intradayCheck"] = intraday_check(data_date, {"v13": v13.get("selected", []), "ucross": ucross.get("selected", []),
+                                                              "v26": unified.get("selected", []),
+                                                              "zaxis": zaxis.get("selected", [])})
+    if args.backfill:
+        # Approximate historical re-screens must not rewrite the live signal ledger.
+        global TRACKING_PATH
+        TRACKING_PATH = daily_dir / "tracking-backfill.json"
     tracking = update_tracking([("v26", unified), ("v13", v13), ("ucross", ucross), ("zaxis", zaxis)], data_date)
     follow_ups = refresh_follow_ups(tracking, data_date)
     combined = {
@@ -685,10 +756,20 @@ def main() -> None:
         "v13": v13,
         "ucross": ucross,
         "zaxis": zaxis,
+        "runId": run_id,
+        "provenance": rule_provenance(ROOT),
+        "replayMode": "approximate_current_fundamentals" if args.backfill else "live",
+        "trackingBasis": "signal_close_observation",
+        "overlap": signal_overlap({"v13": v13, "v26": unified, "ucross": ucross, "zaxis": zaxis}),
     }
     save_json(daily_dir / "combined.json", combined)
-    (daily_dir / "report.md").write_text(render_combined_report(data_date, unified, v13, follow_ups, ucross, zaxis), encoding="utf-8")
+    report = render_combined_report(data_date, unified, v13, follow_ups, ucross, zaxis)
+    if args.backfill:
+        report = "> 近似历史回放：K线截断至历史日，财务名单、公告及部分市值使用当前可用数据；非当时名单的精确还原。\n\n" + report
+    (daily_dir / "report.md").write_text(report, encoding="utf-8")
     card = build_feishu_card(data_date, unified, v13, follow_ups, ucross, zaxis)
+    if args.backfill:
+        card["card"]["elements"].insert(0, {"tag": "markdown", "content": "**近似历史回放，仅本地研究；财务/公告及部分市值使用当前可用数据。**"})
     save_json(daily_dir / "feishu-card.json", card)
     if args.backfill:
         save_json(daily_dir / "status.json", {"status": "backfilled", "dataDate": data_date})

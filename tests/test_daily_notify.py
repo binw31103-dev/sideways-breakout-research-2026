@@ -95,15 +95,15 @@ class DailyNotifyTest(unittest.TestCase):
         serialized = str(card)
         self.assertLess(serialized.index("主推样本"), serialized.index("观察样本"))
         self.assertLess(serialized.index("观察样本"), serialized.index("底部样本"))
-        self.assertIn("主推1只", serialized)
-        self.assertIn("底部观察池（v2.6，观察、不作入场依据）", serialized)
+        self.assertIn("平台初破 1只", serialized)
+        self.assertIn("底部横盘（观察、不作入场依据）", serialized)
         self.assertNotIn("hook/", serialized)
 
     def test_card_reports_empty_sections(self) -> None:
         serialized = str(daily.build_feishu_card("2026-08-11", {"selected": []}, {"selected": []}, {"v13": [], "v26": []}))
-        self.assertIn("今日没有满足主推条件的股票", serialized)
-        self.assertIn("今日没有股票满足底部观察条件", serialized)
-        self.assertIn("主推 0只｜其他启动观察 0只｜底部观察池 0只", serialized)
+        self.assertIn("今日没有满足平台初破条件的股票", serialized)
+        self.assertIn("今日没有股票满足底部横盘条件", serialized)
+        self.assertIn("平台初破 0只｜底部横盘 0只", serialized)
 
     def test_card_shows_regime_status_and_follow_up(self) -> None:
         record = {
@@ -113,9 +113,17 @@ class DailyNotifyTest(unittest.TestCase):
         regime = {"available": True, "weak": False, "label": "中证1000 在MA120上方（+3.0%）｜近20日+5.0%"}
         serialized = str(daily.build_feishu_card("2026-09-17", {"selected": [], "marketRegime": regime}, {"selected": []},
                                                  {"v13": [record], "v26": []}))
-        self.assertIn("谨慎：中证1000在MA120上方", serialized)
+        # v2.7 dropped the "可关注/谨慎" verdict; the card shows the raw regime label only.
+        self.assertIn("中证1000 在MA120上方（+3.0%）", serialized)
         self.assertIn("启动中｜★浦发银行 600000", serialized)
         self.assertIn("第12/40日", serialized)
+
+    def test_regime_unavailable_is_not_printed_twice(self) -> None:
+        regime = {"available": False, "label": "大盘环境待核", "note": "中证1000行情获取失败"}
+        serialized = str(daily.build_feishu_card("2026-11-06", {"selected": [], "marketRegime": regime},
+                                                 {"selected": []}, {"v13": [], "v26": []}))
+        self.assertEqual(serialized.count("大盘环境待核"), 1)
+        self.assertIn("中证1000行情获取失败", serialized)
 
 
 if __name__ == "__main__":

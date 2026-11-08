@@ -40,6 +40,8 @@ from screen_v25_recent_edge import (
 )
 
 
+from screen_reliability import primary_scan_health
+
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "v1.3右侧启动观察池.md"
 DEFAULT_JSON = ROOT / "output" / "v1.3-right-start.json"
@@ -396,6 +398,7 @@ def main() -> None:
         "allCandidates": enriched,
         "technicalCandidates": technical,
         "failures": failures,
+        "scan": primary_scan_health(len(financials), failures),
     }, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"financials={len(financials)} technical={len(technical)} passed={len(enriched)} selected={len(selected)} failures={len(failures)}")
     print(f"wrote {args.output}")

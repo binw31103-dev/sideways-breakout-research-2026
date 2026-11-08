@@ -1,0 +1,13 @@
+{
+ "dataThrough": "2026-11-06",
+ "method": "zero-axis-near-cross",
+ "days": 1,
+ "criteria": {
+  "nearZeroPct": 1.0,
+  "maxRiseLowPct": 8.0,
+  "maxRange20Pct": 12.0,
+  "maxChange5Pct": 3.0,
+  "maxVolumeRatio": 1.2
+ },
+ "selected": []
+}
