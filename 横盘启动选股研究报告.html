@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%2317201d'/%3E%3Cpath d='M5 17h5l2.5-7 4 14 3.5-10 2 5h5' fill='none' stroke='%23f4f5f2' stroke-width='2'/%3E%3C/svg%3E">
+  <title>横盘启动选股研究报告</title>
+  <style>
+    :root { --bg:#f3f5f2; --paper:#fff; --ink:#17201d; --muted:#6d7772; --line:#d8dedb; --blue:#145da0; --blue-soft:#e8f1f8; --red:#c64038; --green:#19835f; --amber:#9a641c; --amber-soft:#f7eddd; --violet:#6e4a91; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:var(--bg); font-family:"Avenir Next","PingFang SC","Microsoft YaHei",sans-serif; line-height:1.6; }
+    button,input,select { font:inherit; }
+    main { width:min(1320px,calc(100% - 32px)); margin:28px auto 60px; }
+    .masthead { background:var(--ink); color:#fff; padding:32px 36px 28px; border-radius:6px 6px 0 0; }
+    .masthead .kicker { color:#9fb7aa; font-size:11px; }
+    h1 { margin:7px 0 6px; font-size:34px; line-height:1.2; letter-spacing:0; }
+    .masthead p { margin:0; color:#bdc9c3; font-size:13px; }
+    .mast-meta { display:flex; flex-wrap:wrap; gap:18px; margin-top:22px; padding-top:16px; border-top:1px solid #35413c; color:#aab7b1; font-size:11px; }
+    .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); background:var(--paper); border:1px solid var(--line); border-top:0; }
+    .metric { padding:20px 22px; } .metric + .metric { border-left:1px solid var(--line); }
+    .metric span,.metric strong,.metric small { display:block; } .metric span { color:var(--muted); font-size:11px; }
+    .metric strong { margin:5px 0 2px; font-family:Consolas,"SFMono-Regular",monospace; font-size:27px; line-height:1.15; } .metric small { color:#8b948f; font-size:10px; }
+    .up { color:var(--red)!important; } .down { color:var(--green)!important; } .flat { color:var(--muted)!important; }
+    .notice { margin:18px 0; padding:15px 17px; background:#edf3f0; border-left:4px solid var(--blue); font-size:12px; }
+    .notice strong { display:block; margin-bottom:3px; }
+    .section { background:var(--paper); border-top:2px solid var(--ink); padding:23px 24px; margin-top:22px; }
+    .section-title { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; margin-bottom:18px; }
+    .section-title span { color:var(--blue); font-size:10px; font-weight:700; } .section-title h2 { margin:3px 0 0; font-size:20px; line-height:1.25; } .section-title p { margin:0; color:var(--muted); font-size:10px; text-align:right; }
+    table { width:100%; border-collapse:collapse; font-size:11px; } th { color:var(--muted); background:#f4f6f4; text-align:left; font-size:10px; } th,td { padding:10px; border:1px solid var(--line); vertical-align:top; } td small { display:block; color:var(--muted); font-size:9px; margin-top:2px; } .num { text-align:right; font-family:Consolas,"SFMono-Regular",monospace; }
+    .category-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
+    .category-panel { background:var(--paper); padding:14px; min-width:0; } .category-panel header { display:flex; align-items:flex-start; gap:9px; min-height:52px; } .category-panel h3 { margin:0; font-size:12px; } .category-panel p { margin:3px 0 0; color:var(--muted); font-size:9px; } .category-panel > small { color:var(--muted); font-size:9px; }
+    .dot { width:8px; height:8px; border-radius:50%; margin-top:5px; flex:0 0 auto; } .dot.blue { background:var(--blue); } .dot.amber { background:var(--amber); } .dot.green { background:var(--green); } .dot.violet { background:var(--violet); }
+    .name-stack { border-top:1px solid var(--line); } .name-stack span { display:flex; justify-content:space-between; gap:6px; padding:7px 0; border-bottom:1px solid #e9ecea; font-size:10px; } .name-stack b { font-family:Consolas,"SFMono-Regular",monospace; font-size:9px; }
+    .toolbar { position:sticky; top:0; z-index:20; display:grid; grid-template-columns:1fr 190px 150px; gap:8px; padding:10px 0; background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .toolbar input,.toolbar select { height:38px; border:1px solid var(--line); border-radius:4px; background:#fff; color:var(--ink); padding:0 11px; font-size:11px; }
+    .record-count { color:var(--muted); font-size:10px; margin:9px 0; }
+    .stock-record { border-bottom:1px solid var(--line); background:#fff; } .stock-record[hidden] { display:none; }
+    .stock-record summary { list-style:none; cursor:pointer; display:grid; grid-template-columns:1.25fr 1fr 1.1fr .75fr .75fr 1.1fr 20px; gap:12px; align-items:center; min-height:70px; padding:10px 12px; } .stock-record summary::-webkit-details-marker { display:none; } .stock-record summary:hover { background:#f7f9f7; }
+    .stock-record summary > span { min-width:0; } .stock-record summary em { display:block; color:var(--muted); font-style:normal; font-size:9px; } .stock-record summary b { font-size:11px; } .stock-id strong,.stock-id small { display:block; } .stock-id strong { font-size:13px; } .stock-id small,.price small { color:var(--muted); font-size:9px; } .price b,.performance b,.rsi b { font-family:Consolas,"SFMono-Regular",monospace; } .chevron { color:var(--muted); font-size:18px; transition:transform .15s ease; } details[open] .chevron { transform:rotate(180deg); }
+    .tag { display:inline-block; border-radius:4px; padding:2px 7px; font-size:9px; font-style:normal; border:1px solid transparent; white-space:nowrap; } .tag.blue { background:var(--blue-soft); border-color:#c7dcea; color:var(--blue); } .tag.amber { background:var(--amber-soft); border-color:#ead4b0; color:var(--amber); } .tag.green { background:#e3f2ec; border-color:#bfe0d3; color:var(--green); } .tag.violet { background:#eee8f4; border-color:#d7c9e5; color:var(--violet); }
+    .stock-detail { background:#f6f8f6; border-top:1px solid var(--line); padding:15px 16px 18px; } .switches { display:grid; grid-template-columns:repeat(3,1fr); background:#fff; border:1px solid var(--line); } .switches > div { padding:11px 12px; } .switches > div + div { border-left:1px solid var(--line); } .switches span,.switches small { display:block; color:var(--muted); font-size:9px; } .switches b { font-size:10px; }
+    .indicator-band { display:grid; grid-template-columns:repeat(4,1fr); margin-top:10px; background:#fff; border:1px solid var(--line); } .indicator-band div { padding:9px 12px; } .indicator-band div + div { border-left:1px solid var(--line); } .indicator-band span,.indicator-band b { display:block; } .indicator-band span { color:var(--muted); font-size:9px; } .indicator-band b { margin-top:2px; font-family:Consolas,"SFMono-Regular",monospace; font-size:11px; }
+    .ma-band { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; } .ma { border:1px solid var(--line); padding:4px 8px; font-family:Consolas,"SFMono-Regular",monospace; font-size:9px; } .ma.on { color:var(--blue); background:var(--blue-soft); border-color:#c8ddeb; } .ma.off { color:var(--muted); background:#edf0ee; }
+    .notes-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:11px; } .notes-grid section { background:#fff; border:1px solid var(--line); padding:12px 14px; } .notes-grid h4 { margin:0 0 8px; font-size:11px; color:var(--blue); } .notes-grid .risks h4 { color:var(--amber); } .notes-grid ul { margin:0; padding-left:17px; } .notes-grid li { margin:3px 0; color:#4e5954; font-size:10px; }
+    .action { display:flex; gap:13px; align-items:baseline; margin-top:10px; padding:11px 13px; background:var(--ink); color:#fff; } .action span { color:#a9b5af; font-size:9px; white-space:nowrap; } .action strong { font-size:10px; }
+    .appearances { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; } .appearances > span { background:#fff; border:1px solid var(--line); padding:5px 8px; font-size:9px; } .appearances .label { color:var(--muted); background:transparent; border:0; padding-left:0; } .appearances b { margin-right:5px; font-family:Consolas,"SFMono-Regular",monospace; }
+    footer { margin-top:22px; padding:16px 2px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; display:flex; justify-content:space-between; gap:20px; }
+    @media print { body { background:#fff; } main { width:100%; margin:0; } .toolbar { display:none; } .stock-record { break-inside:avoid; } .stock-record:not([open]) .stock-detail { display:none; } }
+    @media (max-width:900px) { .summary-grid { grid-template-columns:repeat(2,1fr); } .metric:nth-child(3) { border-left:0; border-top:1px solid var(--line); } .metric:nth-child(4) { border-top:1px solid var(--line); } .category-grid { grid-template-columns:repeat(2,1fr); } .stock-record summary { grid-template-columns:1fr auto; gap:8px; } .stock-record summary > span:nth-child(n+3):not(.performance):not(.chevron) { display:none; } .performance { text-align:right; } .chevron { display:none; } }
+    @media (max-width:620px) { main { width:calc(100% - 18px); margin:9px auto 32px; } .masthead { padding:24px 20px; } h1 { font-size:25px; } .summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .metric { padding:14px; } .metric strong { font-size:22px; } .section { padding:17px 13px; } .section-title p { display:none; } .category-grid { display:block; border:0; background:transparent; } .category-panel { border:1px solid var(--line); margin-bottom:9px; } .toolbar { grid-template-columns:1fr 1fr; } .toolbar input { grid-column:1/-1; } .toolbar select:last-child { display:none; } .stock-record summary { min-height:64px; padding:9px 8px; } .switches { grid-template-columns:1fr; } .switches > div + div { border-left:0; border-top:1px solid var(--line); } .indicator-band { grid-template-columns:repeat(2,1fr); } .indicator-band div:nth-child(3) { border-left:0; border-top:1px solid var(--line); } .indicator-band div:nth-child(4) { border-top:1px solid var(--line); } .notes-grid { grid-template-columns:1fr; } table { min-width:760px; } .table-scroll { overflow:auto; } footer { display:block; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="masthead">
+      <span class="kicker">A股观察池 · v1.9-fresh-30</span>
+      <h1>横盘启动选股研究报告</h1>
+      <p>按最新 v1.9 口径从当前A股重新筛选 30 只，不合并前面各轮股票。</p>
+      <div class="mast-meta"><span>数据交易日：2026-07-27</span><span>报告生成：2026-07-28 13:34</span><span>报告批次：1</span><span>唯一股票：30</span></div>
+    </header>
+
+    <section class="summary-grid">
+      <div class="metric"><span>本轮全新样本</span><strong>30</strong><small>与旧 48 只交集为 0</small></div>
+      <div class="metric"><span>行业开关通过</span><strong>30</strong><small>板块已有其他拉升标的</small></div>
+      <div class="metric"><span>中高弹性</span><strong>24</strong><small>一年波段与涨停记忆</small></div>
+      <div class="metric"><span>平均研究评分</span><strong>93.8</strong><small>前置开关通过后的比较分</small></div>
+    </section>
+
+    <div class="notice"><strong>研究边界</strong>本页面用于选票框架研究与观察池跟踪，不构成个股推荐、买卖建议或交易指令。 行业开关使用当日板块快照；归母净利润为正不代表完整排雷，仍需核对扣非净利、现金流、商誉、质押、减持和监管事项。</div>
+
+    <section class="section">
+      <div class="section-title"><div><span>本轮口径</span><h2>全市场重新筛选</h2></div><p>基于低位、RSI/MACD、MA5/10、行业拉升标的和弹性</p></div>
+      <div class="table-scroll"><table><thead><tr><th>版本 / 日期</th><th>规则类别</th><th>本轮核心变化</th><th class="num">样本</th><th class="num">均值</th><th class="num">上涨</th></tr></thead><tbody>
+        <tr>
+          <td><strong>v1.9 / 全新30只</strong><small>2026-07-27</small></td>
+          <td>最新要求重新筛选</td>
+          <td>排除旧48只，按盈利、低位、MA5/10、RSI趋势、MACD水下修复、行业拉升标的与弹性重新筛选。</td>
+          <td class="num">30</td>
+          <td class="num flat">0.00%</td>
+          <td class="num">0</td>
+        </tr></tbody></table></div>
+    </section>
+
+    <section class="section">
+      <div class="section-title"><div><span>当前分层</span><h2>按研究类别汇总</h2></div><p>类别由当前 RSI、MACD、均线和价格位置重新计算</p></div>
+      <div class="category-grid">
+            <article class="category-panel">
+              <header><i class="dot amber"></i><div><h3>5/10早期修复</h3><p>1 只 · 入选后均值 <b class="flat">0.00%</b></p></div></header>
+              <div class="name-stack"><span>太平鸟 <b class="flat">0.00%</b></span></div>
+              
+            </article>
+
+            <article class="category-panel">
+              <header><i class="dot amber"></i><div><h3>5/10早修复·部分确认</h3><p>8 只 · 入选后均值 <b class="flat">0.00%</b></p></div></header>
+              <div class="name-stack"><span>城建发展 <b class="flat">0.00%</b></span><span>东方创业 <b class="flat">0.00%</b></span><span>传化智联 <b class="flat">0.00%</b></span><span>汉马科技 <b class="flat">0.00%</b></span><span>特力A <b class="flat">0.00%</b></span><span>数码视讯 <b class="flat">0.00%</b></span><span>厦门信达 <b class="flat">0.00%</b></span><span>三态股份 <b class="flat">0.00%</b></span></div>
+              
+            </article>
+
+            <article class="category-panel">
+              <header><i class="dot blue"></i><div><h3>v1.3图形确认</h3><p>21 只 · 入选后均值 <b class="flat">0.00%</b></p></div></header>
+              <div class="name-stack"><span>豫园股份 <b class="flat">0.00%</b></span><span>佳都科技 <b class="flat">0.00%</b></span><span>安正时尚 <b class="flat">0.00%</b></span><span>美凯龙 <b class="flat">0.00%</b></span><span>卧龙新能 <b class="flat">0.00%</b></span><span>上海临港 <b class="flat">0.00%</b></span><span>韵达股份 <b class="flat">0.00%</b></span><span>江苏国泰 <b class="flat">0.00%</b></span></div>
+              <small>另有 13 只，见下方明细</small>
+            </article></div>
+    </section>
+
+    <section class="section" id="stock-list">
+      <div class="section-title"><div><span>持续跟踪</span><h2>30 只全新样本研究明细</h2></div><p>点击股票行展开理由、风险、指标与观察行动</p></div>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="搜索名称、代码、行业或方向" aria-label="搜索股票">
+        <select id="category" aria-label="按类别筛选"><option value="">全部类别</option><option>5/10早期修复</option><option>5/10早修复·部分确认</option><option>v1.3图形确认</option></select>
+        <select id="sort" aria-label="排序"><option value="performance">表现从高到低</option><option value="performance-asc">表现从低到高</option><option value="name">名称排序</option></select>
+      </div>
+      <div class="record-count" id="record-count">显示 30 / 30 只</div>
+      <div id="records">
+            <details class="stock-record" data-search="豫园股份 600655 一般零售 一般零售 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>豫园股份</strong><small>600655 · 一般零售</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>4.44 → 4.44</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>41.9 / 53.3</b></span>
+                <span class="macd"><em>周 MACD</em><b>A 水下近6周金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>1.57 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>100</b></div>
+                  <div><span>板块拉升标的</span><b>东百集团</b><small>+9.96%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>22.8%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>10.4%</b></div>
+                  <div><span>20 日</span><b class="up">+6.50%</b></div>
+                  <div><span>60 日</span><b class="down">-9.40%</b></div>
+                  <div><span>60 日波动</span><b>23.9%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点10.4%，20日涨幅+6.5%，尚未脱离低位区</li><li>周RSI 41.9，相比4/8周前改善2项；周MACD为A 水下近6周金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>一般零售开关通过：东百集团 600693 +9.96%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="佳都科技 600728 it服务ⅱ it服务ⅱ v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>佳都科技</strong><small>600728 · IT服务Ⅱ</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>4.46 → 4.46</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>35.1 / 52.3</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.12 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>98</b></div>
+                  <div><span>板块拉升标的</span><b>荣联科技</b><small>+10.00%</small></div>
+                  <div><span>弹性分层</span><b>高</b></div>
+                  <div><span>一年最大波段</span><b>53.8%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>9.6%</b></div>
+                  <div><span>20 日</span><b class="up">+5.70%</b></div>
+                  <div><span>60 日</span><b class="down">-18.50%</b></div>
+                  <div><span>60 日波动</span><b>41.3%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点9.6%，20日涨幅+5.7%，尚未脱离低位区</li><li>周RSI 35.1，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>IT服务Ⅱ开关通过：荣联科技 002642 +10.00%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="安正时尚 603839 服装家纺 服装家纺 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>安正时尚</strong><small>603839 · 服装家纺</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>6.13 → 6.13</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>39.7 / 49.7</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.30 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>98</b></div>
+                  <div><span>板块拉升标的</span><b>乔治白</b><small>+9.96%</small></div>
+                  <div><span>弹性分层</span><b>高</b></div>
+                  <div><span>一年最大波段</span><b>55.2%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>10.1%</b></div>
+                  <div><span>20 日</span><b class="up">+3.20%</b></div>
+                  <div><span>60 日</span><b class="down">-19.70%</b></div>
+                  <div><span>60 日波动</span><b>50.8%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点10.1%，20日涨幅+3.2%，尚未脱离低位区</li><li>周RSI 39.7，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>服装家纺开关通过：乔治白 002687 +9.96%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="美凯龙 601828 一般零售 一般零售 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>美凯龙</strong><small>601828 · 一般零售</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>2.17 → 2.17</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>36.7 / 48.9</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.48 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>97</b></div>
+                  <div><span>板块拉升标的</span><b>东百集团</b><small>+9.96%</small></div>
+                  <div><span>弹性分层</span><b>高</b></div>
+                  <div><span>一年最大波段</span><b>30.0%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>7.4%</b></div>
+                  <div><span>20 日</span><b class="up">+3.30%</b></div>
+                  <div><span>60 日</span><b class="down">-19.60%</b></div>
+                  <div><span>60 日波动</span><b>40.6%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点7.4%，20日涨幅+3.3%，尚未脱离低位区</li><li>周RSI 36.7，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>一般零售开关通过：东百集团 600693 +9.96%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="卧龙新能 600173 房地产开发 房地产开发 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>卧龙新能</strong><small>600173 · 房地产开发</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>6.03 → 6.03</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>41.3 / 51.1</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.12 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>97</b></div>
+                  <div><span>板块拉升标的</span><b>张江高科</b><small>+9.99%</small></div>
+                  <div><span>弹性分层</span><b>高</b></div>
+                  <div><span>一年最大波段</span><b>65.0%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>11.5%</b></div>
+                  <div><span>20 日</span><b class="up">+1.50%</b></div>
+                  <div><span>60 日</span><b class="down">-17.40%</b></div>
+                  <div><span>60 日波动</span><b>43.8%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点11.5%，20日涨幅+1.5%，尚未脱离低位区</li><li>周RSI 41.3，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>房地产开发开关通过：张江高科 600895 +9.99%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="上海临港 600848 房地产开发 房地产开发 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>上海临港</strong><small>600848 · 房地产开发</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>8.14 → 8.14</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>37.1 / 52.7</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>0.84 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>97</b></div>
+                  <div><span>板块拉升标的</span><b>张江高科</b><small>+9.99%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>57.1%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>11.5%</b></div>
+                  <div><span>20 日</span><b class="up">+7.50%</b></div>
+                  <div><span>60 日</span><b class="down">-9.60%</b></div>
+                  <div><span>60 日波动</span><b>32.5%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点11.5%，20日涨幅+7.5%，尚未脱离低位区</li><li>周RSI 37.1，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>房地产开发开关通过：张江高科 600895 +9.99%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="韵达股份 002120 物流 物流 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>韵达股份</strong><small>002120 · 物流</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>6.72 → 6.72</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>47.1 / 51.1</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>4.87 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>95</b></div>
+                  <div><span>板块拉升标的</span><b>东方嘉盛</b><small>+9.98%</small></div>
+                  <div><span>弹性分层</span><b>高</b></div>
+                  <div><span>一年最大波段</span><b>32.0%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>11.1%</b></div>
+                  <div><span>20 日</span><b class="up">+7.00%</b></div>
+                  <div><span>60 日</span><b class="down">-15.00%</b></div>
+                  <div><span>60 日波动</span><b>34.4%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点11.1%，20日涨幅+7.0%，尚未脱离低位区</li><li>周RSI 47.1，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>物流开关通过：东方嘉盛 002889 +9.98%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>近5日量能低于20日均量，启动意愿仍需观察</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="江苏国泰 002091 贸易ⅱ 贸易ⅱ v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>江苏国泰</strong><small>002091 · 贸易Ⅱ</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>7.54 → 7.54</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>40.3 / 48.9</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>2.12 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>95</b></div>
+                  <div><span>板块拉升标的</span><b>五矿发展</b><small>+5.27%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>52.9%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>6.8%</b></div>
+                  <div><span>20 日</span><b class="up">+6.20%</b></div>
+                  <div><span>60 日</span><b class="down">-21.50%</b></div>
+                  <div><span>60 日波动</span><b>40.1%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点6.8%，20日涨幅+6.2%，尚未脱离低位区</li><li>周RSI 40.3，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>贸易Ⅱ开关通过：五矿发展 600058 +5.27%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="云鼎科技 000409 it服务ⅱ it服务ⅱ v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>云鼎科技</strong><small>000409 · IT服务Ⅱ</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>8.41 → 8.41</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>30.5 / 48.9</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.20 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>95</b></div>
+                  <div><span>板块拉升标的</span><b>荣联科技</b><small>+10.00%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>36.3%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>7.8%</b></div>
+                  <div><span>20 日</span><b class="up">+2.90%</b></div>
+                  <div><span>60 日</span><b class="down">-16.50%</b></div>
+                  <div><span>60 日波动</span><b>38.5%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点7.8%，20日涨幅+2.9%，尚未脱离低位区</li><li>周RSI 30.5，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>IT服务Ⅱ开关通过：荣联科技 002642 +10.00%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="石头科技 688169 小家电 小家电 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>石头科技</strong><small>688169 · 小家电</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>102.36 → 102.36</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>38.7 / 52.1</b></span>
+                <span class="macd"><em>周 MACD</em><b>A 水下近6周金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>3.23 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>95</b></div>
+                  <div><span>板块拉升标的</span><b>欧伦电气</b><small>+6.92%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>40.2%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>14.3%</b></div>
+                  <div><span>20 日</span><b class="up">+9.40%</b></div>
+                  <div><span>60 日</span><b class="down">-12.60%</b></div>
+                  <div><span>60 日波动</span><b>50.2%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点14.3%，20日涨幅+9.4%，尚未脱离低位区</li><li>周RSI 38.7，相比4/8周前改善2项；周MACD为A 水下近6周金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>小家电开关通过：欧伦电气 920081 +6.92%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="城建发展 600266 房地产开发 房地产开发 5/10早修复·部分确认" data-category="5/10早修复·部分确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>城建发展</strong><small>600266 · 房地产开发</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早修复·部分确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>4.03 → 4.03</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>38.0 / 47.0</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>1.64 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>94</b></div>
+                  <div><span>板块拉升标的</span><b>张江高科</b><small>+9.99%</small></div>
+                  <div><span>弹性分层</span><b>高</b></div>
+                  <div><span>一年最大波段</span><b>69.7%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>6.3%</b></div>
+                  <div><span>20 日</span><b class="up">+2.30%</b></div>
+                  <div><span>60 日</span><b class="down">-15.30%</b></div>
+                  <div><span>60 日波动</span><b>44.1%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点6.3%，20日涨幅+2.3%，尚未脱离低位区</li><li>周RSI 38.0，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早修复·部分确认</li><li>房地产开发开关通过：张江高科 600895 +9.99%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早修复·部分确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="东方创业 600278 贸易ⅱ 贸易ⅱ 5/10早修复·部分确认" data-category="5/10早修复·部分确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>东方创业</strong><small>600278 · 贸易Ⅱ</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早修复·部分确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>6.10 → 6.10</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>34.2 / 47.1</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.36 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>94</b></div>
+                  <div><span>板块拉升标的</span><b>五矿发展</b><small>+5.27%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>32.6%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>5.5%</b></div>
+                  <div><span>20 日</span><b class="up">+2.90%</b></div>
+                  <div><span>60 日</span><b class="down">-14.30%</b></div>
+                  <div><span>60 日波动</span><b>34.9%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点5.5%，20日涨幅+2.9%，尚未脱离低位区</li><li>周RSI 34.2，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早修复·部分确认</li><li>贸易Ⅱ开关通过：五矿发展 600058 +5.27%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早修复·部分确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="太平鸟 603877 服装家纺 服装家纺 5/10早期修复" data-category="5/10早期修复" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>太平鸟</strong><small>603877 · 服装家纺</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早期修复</i></span>
+                <span class="price"><em>首次 → 当前</em><b>12.63 → 12.63</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>41.8 / 48.8</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>1.37 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>93</b></div>
+                  <div><span>板块拉升标的</span><b>乔治白</b><small>+9.96%</small></div>
+                  <div><span>弹性分层</span><b>高</b></div>
+                  <div><span>一年最大波段</span><b>31.8%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>9.8%</b></div>
+                  <div><span>20 日</span><b class="up">+3.40%</b></div>
+                  <div><span>60 日</span><b class="down">-12.00%</b></div>
+                  <div><span>60 日波动</span><b>26.3%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma off">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点9.8%，20日涨幅+3.4%，尚未脱离低位区</li><li>周RSI 41.8，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早期修复</li><li>服装家纺开关通过：乔治白 002687 +9.96%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早期修复</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="居然智家 000785 一般零售 一般零售 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>居然智家</strong><small>000785 · 一般零售</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>2.17 → 2.17</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>38.1 / 51.7</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>0.62 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>93</b></div>
+                  <div><span>板块拉升标的</span><b>东百集团</b><small>+9.96%</small></div>
+                  <div><span>弹性分层</span><b>高</b></div>
+                  <div><span>一年最大波段</span><b>37.1%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>12.4%</b></div>
+                  <div><span>20 日</span><b class="up">+9.00%</b></div>
+                  <div><span>60 日</span><b class="down">-15.60%</b></div>
+                  <div><span>60 日波动</span><b>40.9%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点12.4%，20日涨幅+9.0%，尚未脱离低位区</li><li>周RSI 38.1，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>一般零售开关通过：东百集团 600693 +9.96%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="传化智联 002010 物流 物流 5/10早修复·部分确认" data-category="5/10早修复·部分确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>传化智联</strong><small>002010 · 物流</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早修复·部分确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>4.57 → 4.57</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>33.1 / 45.3</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>2.66 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>93</b></div>
+                  <div><span>板块拉升标的</span><b>东方嘉盛</b><small>+9.98%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>35.6%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>3.2%</b></div>
+                  <div><span>20 日</span><b class="up">+0.20%</b></div>
+                  <div><span>60 日</span><b class="down">-19.40%</b></div>
+                  <div><span>60 日波动</span><b>33.4%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点3.2%，20日涨幅+0.2%，尚未脱离低位区</li><li>周RSI 33.1，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早修复·部分确认</li><li>物流开关通过：东方嘉盛 002889 +9.98%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早修复·部分确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="汉马科技 600375 商用车 商用车 5/10早修复·部分确认" data-category="5/10早修复·部分确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>汉马科技</strong><small>600375 · 商用车</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早修复·部分确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>3.84 → 3.84</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>31.0 / 47.2</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.27 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>93</b></div>
+                  <div><span>板块拉升标的</span><b>曙光股份</b><small>+10.16%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>35.0%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>9.7%</b></div>
+                  <div><span>20 日</span><b class="up">+5.50%</b></div>
+                  <div><span>60 日</span><b class="down">-27.80%</b></div>
+                  <div><span>60 日波动</span><b>54.9%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点9.7%，20日涨幅+5.5%，尚未脱离低位区</li><li>周RSI 31.0，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早修复·部分确认</li><li>商用车开关通过：曙光股份 600303 +10.16%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早修复·部分确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="特力a 000025 综合ⅱ 综合ⅱ 5/10早修复·部分确认" data-category="5/10早修复·部分确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>特力A</strong><small>000025 · 综合Ⅱ</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早修复·部分确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>14.07 → 14.07</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>37.6 / 50.5</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.33 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>93</b></div>
+                  <div><span>板块拉升标的</span><b>亚泰集团</b><small>+6.40%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>25.4%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>10.3%</b></div>
+                  <div><span>20 日</span><b class="up">+5.60%</b></div>
+                  <div><span>60 日</span><b class="down">-13.80%</b></div>
+                  <div><span>60 日波动</span><b>31.1%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点10.3%，20日涨幅+5.6%，尚未脱离低位区</li><li>周RSI 37.6，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早修复·部分确认</li><li>综合Ⅱ开关通过：亚泰集团 600881 +6.40%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早修复·部分确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="华贸物流 603128 物流 物流 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>华贸物流</strong><small>603128 · 物流</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>5.36 → 5.36</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>43.9 / 55.1</b></span>
+                <span class="macd"><em>周 MACD</em><b>A 水下近6周金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>0.92 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>93</b></div>
+                  <div><span>板块拉升标的</span><b>东方嘉盛</b><small>+9.98%</small></div>
+                  <div><span>弹性分层</span><b>低</b></div>
+                  <div><span>一年最大波段</span><b>14.2%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>8.3%</b></div>
+                  <div><span>20 日</span><b class="up">+5.70%</b></div>
+                  <div><span>60 日</span><b class="down">-2.00%</b></div>
+                  <div><span>60 日波动</span><b>17.0%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点8.3%，20日涨幅+5.7%，尚未脱离低位区</li><li>周RSI 43.9，相比4/8周前改善2项；周MACD为A 水下近6周金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>物流开关通过：东方嘉盛 002889 +9.98%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="中集车辆 301039 商用车 商用车 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>中集车辆</strong><small>301039 · 商用车</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>7.39 → 7.39</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>39.1 / 52.1</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>1.57 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>93</b></div>
+                  <div><span>板块拉升标的</span><b>曙光股份</b><small>+10.16%</small></div>
+                  <div><span>弹性分层</span><b>低</b></div>
+                  <div><span>一年最大波段</span><b>28.5%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>11.0%</b></div>
+                  <div><span>20 日</span><b class="up">+3.20%</b></div>
+                  <div><span>60 日</span><b class="down">-15.40%</b></div>
+                  <div><span>60 日波动</span><b>36.2%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点11.0%，20日涨幅+3.2%，尚未脱离低位区</li><li>周RSI 39.1，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>商用车开关通过：曙光股份 600303 +10.16%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="数码视讯 300079 it服务ⅱ it服务ⅱ 5/10早修复·部分确认" data-category="5/10早修复·部分确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>数码视讯</strong><small>300079 · IT服务Ⅱ</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早修复·部分确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>4.25 → 4.25</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>32.6 / 46.5</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.10 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>荣联科技</b><small>+10.00%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>40.2%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>6.5%</b></div>
+                  <div><span>20 日</span><b class="up">+2.70%</b></div>
+                  <div><span>60 日</span><b class="down">-22.00%</b></div>
+                  <div><span>60 日波动</span><b>51.4%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点6.5%，20日涨幅+2.7%，尚未脱离低位区</li><li>周RSI 32.6，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早修复·部分确认</li><li>IT服务Ⅱ开关通过：荣联科技 002642 +10.00%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早修复·部分确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="厦门信达 000701 贸易ⅱ 贸易ⅱ 5/10早修复·部分确认" data-category="5/10早修复·部分确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>厦门信达</strong><small>000701 · 贸易Ⅱ</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早修复·部分确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>4.57 → 4.57</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>34.7 / 46.5</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.11 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>五矿发展</b><small>+5.27%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>62.6%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>8.6%</b></div>
+                  <div><span>20 日</span><b class="up">+3.90%</b></div>
+                  <div><span>60 日</span><b class="down">-21.90%</b></div>
+                  <div><span>60 日波动</span><b>50.8%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点8.6%，20日涨幅+3.9%，尚未脱离低位区</li><li>周RSI 34.7，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早修复·部分确认</li><li>贸易Ⅱ开关通过：五矿发展 600058 +5.27%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早修复·部分确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="首旅酒店 600258 酒店餐饮 酒店餐饮 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>首旅酒店</strong><small>600258 · 酒店餐饮</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>11.93 → 11.93</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>36.5 / 51.3</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>1.69 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>华天酒店</b><small>+9.88%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>34.1%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>13.0%</b></div>
+                  <div><span>20 日</span><b class="up">+7.70%</b></div>
+                  <div><span>60 日</span><b class="down">-19.10%</b></div>
+                  <div><span>60 日波动</span><b>52.9%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点13.0%，20日涨幅+7.7%，尚未脱离低位区</li><li>周RSI 36.5，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>酒店餐饮开关通过：华天酒店 000428 +9.88%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="科沃斯 603486 小家电 小家电 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>科沃斯</strong><small>603486 · 小家电</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>54.95 → 54.95</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>39.8 / 52.3</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>4.05 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>欧伦电气</b><small>+6.92%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>67.0%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>13.5%</b></div>
+                  <div><span>20 日</span><b class="up">+10.40%</b></div>
+                  <div><span>60 日</span><b class="down">-18.00%</b></div>
+                  <div><span>60 日波动</span><b>46.7%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点13.5%，20日涨幅+10.4%，尚未脱离低位区</li><li>周RSI 39.8，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>小家电开关通过：欧伦电气 920081 +6.92%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="顶点软件 603383 软件开发 软件开发 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>顶点软件</strong><small>603383 · 软件开发</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>29.09 → 29.09</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>43.5 / 59.1</b></span>
+                <span class="macd"><em>周 MACD</em><b>A 水下近6周金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.46 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>南天信息</b><small>+10.01%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>24.6%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>15.5%</b></div>
+                  <div><span>20 日</span><b class="up">+10.80%</b></div>
+                  <div><span>60 日</span><b class="down">-11.70%</b></div>
+                  <div><span>60 日波动</span><b>37.4%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点15.5%，20日涨幅+10.8%，尚未脱离低位区</li><li>周RSI 43.5，相比4/8周前改善2项；周MACD为A 水下近6周金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>软件开发开关通过：南天信息 000948 +10.01%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="昂立教育 600661 教育 教育 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>昂立教育</strong><small>600661 · 教育</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>7.80 → 7.80</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>38.3 / 52.9</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.25 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>传智教育</b><small>+9.97%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>21.5%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>15.6%</b></div>
+                  <div><span>20 日</span><b class="up">+11.00%</b></div>
+                  <div><span>60 日</span><b class="down">-21.80%</b></div>
+                  <div><span>60 日波动</span><b>53.6%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点15.6%，20日涨幅+11.0%，尚未脱离低位区</li><li>周RSI 38.3，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>教育开关通过：传智教育 003032 +9.97%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>近5日量能低于20日均量，启动意愿仍需观察</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="中宠股份 002891 饲料 饲料 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>中宠股份</strong><small>002891 · 饲料</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>29.75 → 29.75</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>35.9 / 55.3</b></span>
+                <span class="macd"><em>周 MACD</em><b>A 水下近6周金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>0.73 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>邦基科技</b><small>+6.03%</small></div>
+                  <div><span>弹性分层</span><b>中</b></div>
+                  <div><span>一年最大波段</span><b>23.9%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>18.3%</b></div>
+                  <div><span>20 日</span><b class="up">+10.20%</b></div>
+                  <div><span>60 日</span><b class="down">-13.60%</b></div>
+                  <div><span>60 日波动</span><b>40.6%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma on">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点18.3%，20日涨幅+10.2%，尚未脱离低位区</li><li>周RSI 35.9，相比4/8周前改善2项；周MACD为A 水下近6周金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>饲料开关通过：邦基科技 603151 +6.03%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="长城汽车 601633 乘用车 乘用车 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>长城汽车</strong><small>601633 · 乘用车</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>16.15 → 16.15</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>32.9 / 51.7</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>9.45 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>北汽蓝谷</b><small>+5.30%</small></div>
+                  <div><span>弹性分层</span><b>低</b></div>
+                  <div><span>一年最大波段</span><b>25.0%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>10.1%</b></div>
+                  <div><span>20 日</span><b class="up">+4.50%</b></div>
+                  <div><span>60 日</span><b class="down">-19.30%</b></div>
+                  <div><span>60 日波动</span><b>37.0%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点10.1%，20日涨幅+4.5%，尚未脱离低位区</li><li>周RSI 32.9，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>乘用车开关通过：北汽蓝谷 600733 +5.30%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="分众传媒 002027 广告营销 广告营销 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>分众传媒</strong><small>002027 · 广告营销</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>5.15 → 5.15</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>33.9 / 53.8</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>17.90 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>92</b></div>
+                  <div><span>板块拉升标的</span><b>天地在线</b><small>+9.98%</small></div>
+                  <div><span>弹性分层</span><b>低</b></div>
+                  <div><span>一年最大波段</span><b>19.4%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>11.2%</b></div>
+                  <div><span>20 日</span><b class="up">+6.80%</b></div>
+                  <div><span>60 日</span><b class="down">-15.60%</b></div>
+                  <div><span>60 日波动</span><b>40.0%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点11.2%，20日涨幅+6.8%，尚未脱离低位区</li><li>周RSI 33.9，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>广告营销开关通过：天地在线 002995 +9.98%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>近5日量能低于20日均量，启动意愿仍需观察</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="东风股份 600006 商用车 商用车 v1.3图形确认" data-category="v1.3图形确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>东风股份</strong><small>600006 · 商用车</small></span>
+                <span><em>当前分层</em><i class="tag blue">v1.3图形确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>5.40 → 5.40</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>32.1 / 50.1</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag blue">通过</b></div>
+                  <div><span>最新归母净利润</span><b>2.06 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>91</b></div>
+                  <div><span>板块拉升标的</span><b>曙光股份</b><small>+10.16%</small></div>
+                  <div><span>弹性分层</span><b>低</b></div>
+                  <div><span>一年最大波段</span><b>25.4%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>7.6%</b></div>
+                  <div><span>20 日</span><b class="up">+4.40%</b></div>
+                  <div><span>60 日</span><b class="down">-17.20%</b></div>
+                  <div><span>60 日波动</span><b>40.2%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma on">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点7.6%，20日涨幅+4.4%，尚未脱离低位区</li><li>周RSI 32.1，相比4/8周前改善1项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为v1.3图形确认</li><li>商用车开关通过：曙光股份 600303 +10.16%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>需人工复核周线二次回踩、放量长上影与上方套牢区</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察站回MA15/30后的回踩是否缩量、周线箱体是否保持。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · v1.3图形确认</span></div>
+              </div>
+            </details>
+
+            <details class="stock-record" data-search="三态股份 301558 互联网电商 互联网电商 5/10早修复·部分确认" data-category="5/10早修复·部分确认" data-performance="0.0">
+              <summary>
+                <span class="stock-id"><strong>三态股份</strong><small>301558 · 互联网电商</small></span>
+                <span><em>当前分层</em><i class="tag amber">5/10早修复·部分确认</i></span>
+                <span class="price"><em>首次 → 当前</em><b>6.29 → 6.29</b><small>2026-07-27</small></span>
+                <span class="performance flat"><em>跟踪表现</em><b>0.00%</b></span>
+                <span class="rsi"><em>周 / 日 RSI</em><b>31.4 / 47.5</b></span>
+                <span class="macd"><em>周 MACD</em><b>B 水下接近金叉</b></span>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="stock-detail">
+                <div class="switches">
+                  <div><span>行业启动开关</span><b class="tag blue">通过</b></div>
+                  <div><span>财务与风险开关</span><b class="tag amber">观察</b></div>
+                  <div><span>最新归母净利润</span><b>0.14 亿</b><small>2026Q1</small></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>研究评分</span><b>89</b></div>
+                  <div><span>板块拉升标的</span><b>青木科技</b><small>+6.58%</small></div>
+                  <div><span>弹性分层</span><b>低</b></div>
+                  <div><span>一年最大波段</span><b>29.0%</b></div>
+                </div>
+                <div class="indicator-band">
+                  <div><span>距一年低点</span><b>5.9%</b></div>
+                  <div><span>20 日</span><b class="up">+2.80%</b></div>
+                  <div><span>60 日</span><b class="down">-22.60%</b></div>
+                  <div><span>60 日波动</span><b>44.1%</b></div>
+                </div>
+                <div class="ma-band"><span class="ma on">MA5</span><span class="ma on">MA10</span><span class="ma on">MA15</span><span class="ma off">MA30</span><span class="ma off">MA60</span><span class="ma off">MA120</span></div>
+                <div class="notes-grid">
+                  <section><h4>继续观察的理由</h4><ul><li>距一年低点5.9%，20日涨幅+2.8%，尚未脱离低位区</li><li>周RSI 31.4，相比4/8周前改善2项；周MACD为B 水下接近金叉</li><li>已站上MA5/MA10，当前层级为5/10早修复·部分确认</li><li>互联网电商开关通过：青木科技 301110 +6.58%</li></ul></section>
+                  <section class="risks"><h4>降级与风险</h4><ul><li>最新归母净利润为正；扣非、现金流、质押与减持仍需F10复核</li><li>行业强度为盘中/当日快照，需继续验证多日扩散和周线持续性</li><li>尚未完整收复MA15/MA30，早修复失败率高于图形确认层</li></ul></section>
+                </div>
+                <div class="action"><span>观察行动</span><strong>观察板块强度能否持续，以及个股能否从MA5/10修复升级为MA15/30图形确认。</strong></div>
+                <div class="appearances"><span class="label">入选轨迹</span><span><b>2026-07-27</b>v1.9 / 全新30只 · 5/10早修复·部分确认</span></div>
+              </div>
+            </details></div>
+    </section>
+
+    <section class="section">
+      <div class="section-title"><div><span>数据与风险</span><h2>当前数据口径</h2></div></div>
+      <div class="table-scroll"><table><tbody>
+        <tr><th>行情数据</th><td>腾讯前复权日K；失败时回退新浪日K。前复权源不可用时，技术指标与价格轨迹使用回退日线口径。</td></tr>
+        <tr><th>财务数据</th><td>东方财富最新主要财务指标。财务开关：通过 17、观察 13。</td></tr>
+        <tr><th>首次入选</th><td>使用报告形成日期；价格使用该日期之前最近交易日收盘。该指标用于研究跟踪，不等同于可执行交易收益。</td></tr>
+        <tr><th>行业启动</th><td>东方财富行业板块盘中/当日快照及领涨股。当日快照不代替多日扩散与周线持续性验证。</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <footer><span>本页面用于选票框架研究与观察池跟踪，不构成个股推荐、买卖建议或交易指令。</span><span>文件：横盘启动选股研究报告.html</span></footer>
+  </main>
+  <script>
+    const records = document.getElementById('records');
+    const search = document.getElementById('search');
+    const category = document.getElementById('category');
+    const sort = document.getElementById('sort');
+    const count = document.getElementById('record-count');
+    const allRecords = Array.from(records.querySelectorAll('.stock-record'));
+    function update() {
+      const q = search.value.trim().toLowerCase();
+      const c = category.value;
+      const sorted = [...allRecords].sort((a,b) => {
+        if (sort.value === 'name') return a.dataset.search.localeCompare(b.dataset.search, 'zh-CN');
+        const diff = Number(b.dataset.performance) - Number(a.dataset.performance);
+        return sort.value === 'performance-asc' ? -diff : diff;
+      });
+      sorted.forEach(item => records.appendChild(item));
+      let visible = 0;
+      allRecords.forEach(item => {
+        const show = (!q || item.dataset.search.includes(q)) && (!c || item.dataset.category === c);
+        item.hidden = !show;
+        if (show) visible++;
+      });
+      count.textContent = `显示 ${visible} / ${allRecords.length} 只`;
+    }
+    search.addEventListener('input', update);
+    category.addEventListener('change', update);
+    sort.addEventListener('change', update);
+  </script>
+</body>
+</html>

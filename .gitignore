@@ -1,0 +1,35 @@
+# Dependencies and builds
+node_modules/
+dist/
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Local Claude settings
+.claude/
+
+# Regenerable data: K-line / quote / fundamentals caches (≈1.4G), rebuilt by the daily job
+# and scripts/research/build_kline_dataset.py
+output/cache/
+
+# Daily raw outputs and logs (regenerated every trading day); the tracking ledger is kept
+output/daily/*/
+output/intraday/*/
+output/logs/
+output/playwright/
+
+# Large backtest signal caches (rebuild with --rescan); result tables (*.md) are kept
+output/backtest/*.json
+
+# Secrets never live in files (Feishu webhook in macOS Keychain, app id/secret in env),
+# but keep local overrides out just in case
+.env
+.env.*
+
+# Real Feishu Bitable ids stay local; copy config/feishu_bitable.example.json
+config/feishu_bitable.json

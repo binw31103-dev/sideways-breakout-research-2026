@@ -1,0 +1,33 @@
+{
+  "app_token": "替换为多维表格 app_token",
+  "tables": {
+    "01 v2.6统一观察每日票池": {
+      "table_id": "替换为该表 table_id",
+      "mode": "replace",
+      "key_fields": [
+        "同步主键"
+      ]
+    },
+    "02 v1.3右侧启动每日票池": {
+      "table_id": "替换为 v1.3 右侧启动每日票池 table_id",
+      "mode": "replace",
+      "key_fields": [
+        "同步主键"
+      ]
+    },
+    "03 表现看板": {
+      "table_id": "替换为表现看板 table_id",
+      "mode": "replace",
+      "key_fields": [
+        "样本ID"
+      ]
+    },
+    "04 股票每日涨跌跟踪": {
+      "table_id": "替换为股票每日涨跌跟踪 table_id",
+      "mode": "replace",
+      "key_fields": [
+        "同步主键"
+      ]
+    }
+  }
+}
