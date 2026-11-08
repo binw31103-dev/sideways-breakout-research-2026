@@ -101,7 +101,7 @@ def main() -> None:
     with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
         for result in executor.map(g_events, sorted(LONG_KLINE_DIR.glob("*.json")), chunksize=20):
             g.extend(x for x in result if keep(x[1]))
-    models = {"右侧启动 v1.3": dedupe(v13), "底部观察池 v2.6": dedupe(v26s), "低位水下金叉": dedupe(g)}
+    models = {"平台初破": dedupe(v13), "底部横盘": dedupe(v26s), "水下金叉": dedupe(g)}
 
     lines = ["# 持有期曲线：次日开盘买入，持有 N 个交易日收盘卖出，不设止损", "",
              "数值 = 相对中证1000 的平均超额（括号内：跑赢比例）；同股 20 日内只计一次；剔除 2024-09。", ""]

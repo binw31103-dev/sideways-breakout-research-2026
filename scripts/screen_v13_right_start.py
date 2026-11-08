@@ -217,7 +217,7 @@ def analyze_code(
         "code": code,
         "name": str(financial.get("SECURITY_NAME_ABBR") or code),
         "industry": str(financial.get("BOARD_NAME") or "待分类"),
-        "model": "v1.3右侧启动",
+        "model": "平台初破",
         "state": metrics["stage"],
         "date": metrics["date"],
         "source": source,
@@ -248,7 +248,7 @@ def analyze_code(
 
 def render(selected: list[dict], scanned: int, technical_count: int, failures: list[dict], regime: dict[str, Any]) -> str:
     lines = [
-        "# v1.3 右侧启动（主推：基本面向好）",
+        "# 平台初破（主推：基本面向好）",
         "",
         f"生成时间：{dt.datetime.now().astimezone().isoformat(timespec='seconds')}。",
         f"行情数据日：{max((item['date'] for item in selected), default='无')}。",
@@ -266,7 +266,7 @@ def render(selected: list[dict], scanned: int, technical_count: int, failures: l
             f"距低点+{item['riseRecentLow']:.1f}%｜5/10/20日 {item['change5']:+.1f}%/{item['change10']:+.1f}%/{item['change20']:+.1f}%\n"
             f"日/周RSI {item['dailyRsi']:.1f}/{item['weeklyRsi']:.1f}｜MA15/30 {item['maDistance15']:+.1f}%/{item['maDistance30']:+.1f}%｜"
             f"MA30斜率 {item['ma30Slope10']:+.1f}%｜{item['dailyMacd']['state']}\n"
-            f"平台突破 {item['currentAbovePlatformPct']:+.1f}%｜突破量比 {item['breakoutVolumeRatio']:.2f}｜行业 {item['conditionChecks']['sector']}\n"
+            f"距上沿 {item['currentAbovePlatformPct']:+.1f}%｜突破量比 {item['breakoutVolumeRatio']:.2f}｜行业 {item['conditionChecks']['sector']}\n"
             f"{trend_text(item.get('fundamentalTrend'))}\n"
             f"{profile_text(item.get('baseProfile'))}\n"
             f"财务 {item['financialState']}｜风险 {item['riskState']}\n"

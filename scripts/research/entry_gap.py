@@ -109,7 +109,7 @@ def main() -> None:
             g.extend(x for x in result if keep(x[1]))
 
     groups = {"v1.3 右沿初确认": [(c, d) for c, d in v13 if (c, d) not in set(v13s)],
-              "v1.3 强启动确认": v13s, "v2.6 底部观察池": v26_pairs, "低位水下金叉": g}
+              "v1.3 强启动确认": v13s, "底部横盘": v26_pairs, "水下金叉": g}
     lines = ["# 次日开盘买入的代价：发现价（T 收盘）到成交价（T+1 开盘）的跳空", "",
              "全部回测都是 T 日收盘筛选、T+1 开盘买入。下表衡量这两者之间的差额，20 日结果按 T+1 开盘计算。", ""]
     for name, pairs in groups.items():

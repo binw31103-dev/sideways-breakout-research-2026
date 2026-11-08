@@ -137,7 +137,7 @@ def main() -> None:
 
     lines = ["# v2.6 / 水下金叉 × 龙头（比例复权数据，2023-07 起，剔除 2024-09）", "",
              "格式：命中组平均超额（同月差 = 命中组 − 同清单同月未命中组，跑赢比例，样本）。", ""]
-    for name, pairs in (("v2.6 底部观察池", v26_pairs), ("低位水下金叉", g)):
+    for name, pairs in (("底部横盘", v26_pairs), ("水下金叉", g)):
         t = trades(pairs)
         lines += [f"## {name}（{len(t)} 笔）", ""]
         for h in HOLD:

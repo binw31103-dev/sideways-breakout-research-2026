@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 HOLD = (5, 10, 20, 40)
-MODELS = (("v13", "右侧启动 v1.3"), ("v26", "底部观察池 v2.6"), ("ucross", "低位水下金叉"))
+MODELS = (("v13", "平台初破"), ("v26", "底部横盘"), ("ucross", "水下金叉"))
 
 
 def stage_of(record: dict) -> str:

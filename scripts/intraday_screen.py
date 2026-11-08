@@ -37,7 +37,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 INTRADAY_ROOT = ROOT / "output" / "intraday"
 WINDOW = (dt.time(14, 40), dt.time(14, 56))
 VOLUME_SHARE_1445 = 0.926
-LISTS = (("v13", "主推：右侧启动"), ("ucross", "低位水下金叉"), ("v26", "底部观察池（观察）"))
+LISTS = (("v13", "平台初破"), ("ucross", "水下金叉"), ("v26", "底部横盘"), ("zaxis", "零轴金叉"))
 
 
 def run(cmd: list[str], env: dict[str, str]) -> None:
@@ -92,7 +92,7 @@ def build_card(date: str, stamp: str, lists: dict[str, list[dict]], quotes: dict
     return {"msg_type": "interactive", "card": {
         "config": {"wide_screen_mode": True},
         "header": {"template": "purple",
-                   "title": {"tag": "plain_text", "content": f"尾盘预选｜{date} {stamp}｜主推{len(lists.get('v13', []))}只"}},
+                   "title": {"tag": "plain_text", "content": f"尾盘预选｜{date} {stamp}｜平台初破{len(lists.get('v13', []))}只"}},
         "elements": elements}}
 
 
@@ -135,6 +135,8 @@ def main() -> None:
          "--output", str(out_dir / "v13.md"), "--json-output", str(out_dir / "v13.json")], env)
     run([py, str(ROOT / "scripts" / "research" / "underwater_cross.py"), "live", "--as-of", date, "--days", "1",
          "--json-output", str(out_dir / "ucross.json")], env)
+    run([py, str(ROOT / "scripts" / "research" / "zero_axis_live.py"), "--as-of", date, "--days", "1",
+         "--json-output", str(out_dir / "zaxis.json")], env)
     run([py, str(ROOT / "scripts" / "screen_v26_unified.py"), "--count", "10",
          "--output", str(out_dir / "v26.md"), "--json-output", str(out_dir / "v26.json")], env)
 

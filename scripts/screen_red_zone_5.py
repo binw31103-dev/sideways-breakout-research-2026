@@ -55,12 +55,9 @@ MARKET_POOL_DEFAULTS = {
         "minAverageAmount20": 50_000_000,
         "requireLeaderQuality": True,
     },
-    "elastic": {
-        "minTotalMarketCap": 3_000_000_000,
-        "minFloatMarketCap": 2_000_000_000,
-        "minAverageAmount20": 30_000_000,
-        "requireLeaderQuality": True,
-    },
+    # "any" is only the fallback when analyze() is called without explicit limits.
+    # The old "elastic" pool (30亿/20亿/0.3亿) was never used by any live screener and was
+    # removed on 2026-11-07; only the core pool runs in v2.6 / v1.3 / ucross / zaxis.
     "any": {
         "minTotalMarketCap": 0,
         "minFloatMarketCap": 0,
@@ -930,15 +927,8 @@ def analyze(
         if total_market_cap >= 5_000_000_000
         and float_market_cap >= 3_000_000_000
         and average_amount20 >= 50_000_000
-        else "弹性市值池"
-        if total_market_cap >= 3_000_000_000
-        and float_market_cap >= 2_000_000_000
-        and average_amount20 >= 30_000_000
         else "微小市值/低流动性"
     )
-    if limits.get("pool") == "elastic" and market_pool_class == "核心市值池":
-        if reject("已归入核心市值池，不在弹性池重复输出", relaxable=False):
-            return None
 
     rsi_lifting = daily_rsi_series[-4] is not None and daily_rsi >= daily_rsi_series[-4]
     manual_precheck = {
@@ -1282,7 +1272,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--manual-review", type=Path)
     parser.add_argument("--max-condition-failures", type=int, default=0)
     parser.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
-    parser.add_argument("--market-pool", choices=("core", "elastic", "any"), default="core")
+    parser.add_argument("--market-pool", choices=("core", "any"), default="core")
     parser.add_argument("--min-total-market-cap-yi", type=float)
     parser.add_argument("--min-float-market-cap-yi", type=float)
     parser.add_argument("--min-average-amount20-yi", type=float)

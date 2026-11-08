@@ -39,7 +39,7 @@ def main() -> None:
             g.extend(x for x in result if keep(x[1]))
     lines = ["# 开盘跳空分档：按 T+1 开盘买入的 20 日超额（相对中证1000）", ""]
     pooled = []
-    for name, pairs in (("v1.3 右侧启动", v13), ("v2.6 底部观察池", v26_pairs), ("低位水下金叉", g)):
+    for name, pairs in (("平台初破", v13), ("底部横盘", v26_pairs), ("水下金叉", g)):
         t = E.trades(pairs, index)
         for x in t:
             x["ex"] = x["hold"] - x["bench_exit"]

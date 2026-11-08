@@ -134,7 +134,7 @@ def live(as_of: str, days: int, json_output: Path | None = None) -> list[dict]:
         hi_k = max(range(k - 119, lo_k + 1), key=lambda j: rows[j]["high"])
         return {
             "code": code, "name": str(names[code].get("SECURITY_NAME_ABBR") or code),
-            "industry": str(names[code].get("BOARD_NAME") or "待分类"), "state": "低位水下金叉",
+            "industry": str(names[code].get("BOARD_NAME") or "待分类"), "state": "水下金叉",
             "totalMarketCap": float(q.get("totalMarketCap") or 0), "crossDate": rows[k]["date"],
             "close": rows[i]["close"], "lowDate": rows[lo_k]["date"], "low": rows[lo_k]["low"],
             "drop": rows[lo_k]["low"] / rows[hi_k]["high"] - 1, "riseLow": rows[i]["close"] / rows[lo_k]["low"] - 1,

@@ -26,6 +26,9 @@ from bottom_base_context import (  # noqa: E402
 # Low-position underwater golden cross (600406 pattern): observed 40 days without the base-break
 # stop, because most such cases dip below the low before resolving (underwater-cross-cases.md).
 TRACK_DAYS_UCROSS = 40
+# Zero-axis golden cross: a 10-20 day rule; the near-zero advantage is gone by 40 days
+# (zero-axis-rule-note.md). Observed 20 days without the base-break stop.
+TRACK_DAYS_ZAXIS = 20
 KEYCHAIN_SERVICE = "codex-sideways-feishu-webhook"
 DEFAULT_RETRY_ATTEMPTS = 3
 DEFAULT_RETRY_DELAY_SECONDS = 600
@@ -130,7 +133,7 @@ def refresh_follow_ups(tracking: dict[str, Any], date: str) -> dict[str, list[di
     """Recompute the follow-up of recent picks as of `date`: v2.6 40 days with the base-break
     stop, v1.3 20 days without a stop."""
     horizon = (dt.date.fromisoformat(date) - dt.timedelta(days=TRACK_DAYS * 2)).isoformat()
-    by_model: dict[str, list[dict[str, Any]]] = {"v13": [], "v26": [], "ucross": []}
+    by_model: dict[str, list[dict[str, Any]]] = {"v13": [], "v26": [], "ucross": [], "zaxis": []}
     for record in tracking.get("records", {}).values():
         if record.get("model") not in by_model or not horizon <= record["firstSelectedDate"] <= date:
             continue
@@ -139,6 +142,8 @@ def refresh_follow_ups(tracking: dict[str, Any], date: str) -> dict[str, list[di
                 record["followUp"] = follow_up(record, date, TRACK_DAYS_V13, use_stop=False)
             elif record["model"] == "ucross":
                 record["followUp"] = follow_up(record, date, TRACK_DAYS_UCROSS, use_stop=False)
+            elif record["model"] == "zaxis":
+                record["followUp"] = follow_up(record, date, TRACK_DAYS_ZAXIS, use_stop=False)
             else:
                 record["followUp"] = follow_up(record, date)
         except Exception as exc:
@@ -188,14 +193,17 @@ def intraday_check(date: str, lists: dict[str, list[dict[str, Any]]]) -> dict[st
 def intraday_check_text(check: dict[str, Any] | None) -> str:
     if not check:
         return ""
-    names = {"v13": "主推", "ucross": "水下金叉", "v26": "底部池"}
+    names = dict(DISPLAY_NAMES)
     parts = [f"{names[k]} 预选{v['preview']}/收盘{v['close']}/一致{v['both']}" for k, v in check.items() if k in names]
     return f"14:45预选核对（{check.get('stamp')}）：" + "；".join(parts)
 
 
 def regime_status(regime: dict[str, Any]) -> str:
+    # When the index quote is missing, `label` already reads "大盘环境待核"; returning text
+    # here too printed the same line twice in the card (2026-11-06).
     if not regime.get("available"):
-        return "大盘环境待核"
+        note = str(regime.get("note") or "").strip()
+        return f"（{note}）" if note else ""
     return "仅作参考：回测中大盘均线状态不能稳定区分好坏时期，不作为开关；收益主要取决于入选后大盘走势"
 
 
@@ -349,12 +357,36 @@ UCROSS_NOTE = (
 )
 
 
+def zaxis_line(item: dict[str, Any]) -> str:
+    trend = item.get("fundamentalTrend") or {}
+    yoy = trend.get("profitYoy")
+    tier_text = {0: "基本面向好", 1: "基本面改善其一"}.get(trend.get("tier"), "基本面未改善")
+    return (
+        f"{item['name']} {item['code']}｜{item.get('industry', '')}｜金叉 {item['crossDate']}｜收盘 {float(item['close']):.2f}｜"
+        f"DIF/价 {float(item.get('difPct', 0)):.2%}｜距低点+{float(item.get('riseRecentLow', 0)):.1f}%｜"
+        f"20日振幅 {float(item.get('range20', 0)):.1f}%｜5日涨幅 {float(item.get('change5', 0)):+.1f}%｜"
+        f"量比 {float(item.get('volumeRatio', 0)):.2f}｜日RSI {float(item.get('dailyRsi', 0)):.1f}｜"
+        f"{tier_text}｜净利同比 {'待核' if yoy is None else f'{yoy:+.0f}%'}"
+    )
+
+
+ZAXIS_NOTE = (
+    "水下金叉且 |DIF|/收盘≤1%（贴近零轴），距60日低点≤8%、20日振幅≤12%、近5日涨幅≤3%、信号日量比≤1.2。"
+    "只对 10~20 日有效，40 日上优势归零；按月 t 值不显著，增量大部分来自横盘贴底本身。观察20日，不设破位。"
+)
+
+# Display names only. The model keys (v26 / v13 / ucross) are archival keys in
+# output/daily/tracking.json — rename the strings, never the keys.
+DISPLAY_NAMES = {"v26": "底部横盘", "v13": "平台初破", "ucross": "水下金叉", "zaxis": "零轴金叉"}
+
+
 def build_feishu_card(
     date: str,
     unified: dict[str, Any],
     v13: dict[str, Any],
     follow_ups: dict[str, list[dict[str, Any]]],
     ucross: dict[str, Any] | None = None,
+    zaxis: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     regime = unified.get("marketRegime") or v13.get("marketRegime") or {}
     featured, others = featured_split(v13)
@@ -364,38 +396,45 @@ def build_feishu_card(
         "content": (
             f"**数据日：{date}**｜腾讯前复权K线（新浪+复权因子备源） + 东方财富财务/公告\n"
             f"**大盘：{regime.get('label', '待核')}**\n{regime_status(regime)}\n"
-            f"主推 {len(featured)}只｜底部观察池 {len(pool)}只"
+            f"{DISPLAY_NAMES['v13']} {len(featured)}只｜{DISPLAY_NAMES['v26']} {len(pool)}只"
             + (f"\n{intraday_check_text((ucross or {}).get('intradayCheck'))}" if (ucross or {}).get("intradayCheck") else "")
         ),
     }]
     elements.append({"tag": "hr"})
-    elements.append({"tag": "markdown", "content": f"### 主推：右侧启动（{TRACK_DAYS_V13}日观察）\n刚突破底部平台；排序：基本面向好优先。回测中持有{TRACK_DAYS_V13}日优于更长持有。"})
+    elements.append({"tag": "markdown", "content": f"### {DISPLAY_NAMES['v13']}（{TRACK_DAYS_V13}日观察）\n刚突破底部平台；排序：基本面向好优先。回测中持有{TRACK_DAYS_V13}日优于更长持有。"})
     if featured:
         for index, item in enumerate(featured, 1):
             elements.append({"tag": "markdown", "content": stock_block(item, index, "v13")})
     else:
-        elements.append({"tag": "markdown", "content": "今日没有满足主推条件的股票。"})
+        elements.append({"tag": "markdown", "content": f"今日没有满足{DISPLAY_NAMES['v13']}条件的股票。"})
     if others:
-        elements.append({"tag": "markdown", "content": "### 其他右侧启动观察（基本面未达主推）\n" + "\n".join(brief_line(i) for i in others)})
+        elements.append({"tag": "markdown", "content": f"### 其他{DISPLAY_NAMES['v13']}观察（基本面未达优先）\n" + "\n".join(brief_line(i) for i in others)})
     elements.append({"tag": "hr"})
-    elements.append({"tag": "markdown", "content": "### 底部观察池（v2.6，观察、不作入场依据）"})
+    elements.append({"tag": "markdown", "content": f"### {DISPLAY_NAMES['v26']}（观察、不作入场依据）"})
     if pool:
         for index, item in enumerate(pool, 1):
             elements.append({"tag": "markdown", "content": stock_block(item, index, "v26")})
     else:
-        elements.append({"tag": "markdown", "content": "今日没有股票满足底部观察条件。"})
+        elements.append({"tag": "markdown", "content": f"今日没有股票满足{DISPLAY_NAMES['v26']}条件。"})
     ucross_items = (ucross or {}).get("selected", [])
     elements.append({"tag": "hr"})
     elements.append({"tag": "markdown", "content": (
-        f"### 低位水下金叉观察（国电南瑞式，{len(ucross_items)}只）\n{UCROSS_NOTE}\n"
-        + ("\n".join(ucross_line(i) for i in ucross_items) if ucross_items else "今日没有新出现的低位水下金叉。")
+        f"### {DISPLAY_NAMES['ucross']}（国电南瑞式，{len(ucross_items)}只）\n{UCROSS_NOTE}\n"
+        + ("\n".join(ucross_line(i) for i in ucross_items) if ucross_items else f"今日没有新出现的{DISPLAY_NAMES['ucross']}。")
+    )})
+    zaxis_items = (zaxis or {}).get("selected", [])
+    elements.append({"tag": "hr"})
+    elements.append({"tag": "markdown", "content": (
+        f"### {DISPLAY_NAMES['zaxis']}（{len(zaxis_items)}只）\n{ZAXIS_NOTE}\n"
+        + ("\n".join(zaxis_line(i) for i in zaxis_items) if zaxis_items else f"今日没有新出现的{DISPLAY_NAMES['zaxis']}。")
     )})
     elements.append({"tag": "hr"})
     elements.append({"tag": "markdown", "content": (
-        "### 跟踪（★=主推）\n"
-        f"**右侧启动（{TRACK_DAYS_V13}日，不设破位）**\n" + "\n".join(follow_up_card_lines(follow_ups.get("v13", []), date))
-        + f"\n**底部观察池（{TRACK_DAYS}日，跌破入选前60日低点5%即失效）**\n" + "\n".join(follow_up_card_lines(follow_ups.get("v26", []), date))
-        + f"\n**低位水下金叉（{TRACK_DAYS_UCROSS}日，不设破位）**\n" + "\n".join(follow_up_card_lines(follow_ups.get("ucross", []), date))
+        "### 跟踪\n"
+        f"**{DISPLAY_NAMES['v13']}（{TRACK_DAYS_V13}日，不设破位）**\n" + "\n".join(follow_up_card_lines(follow_ups.get("v13", []), date))
+        + f"\n**{DISPLAY_NAMES['v26']}（{TRACK_DAYS}日，跌破入选前60日低点5%即失效）**\n" + "\n".join(follow_up_card_lines(follow_ups.get("v26", []), date))
+        + f"\n**{DISPLAY_NAMES['ucross']}（{TRACK_DAYS_UCROSS}日，不设破位）**\n" + "\n".join(follow_up_card_lines(follow_ups.get("ucross", []), date))
+        + f"\n**{DISPLAY_NAMES['zaxis']}（{TRACK_DAYS_ZAXIS}日，不设破位）**\n" + "\n".join(follow_up_card_lines(follow_ups.get("zaxis", []), date))
     )})
     elements.append({
         "tag": "note",
@@ -407,7 +446,7 @@ def build_feishu_card(
             "config": {"wide_screen_mode": True, "enable_forward": True},
             "header": {
                 "template": "red" if featured else "blue",
-                "title": {"tag": "plain_text", "content": f"A股底部启动观察｜{date}｜主推{len(featured)}只"},
+                "title": {"tag": "plain_text", "content": f"A股底部启动观察｜{date}｜{DISPLAY_NAMES['v13']}{len(featured)}只"},
             },
             "elements": elements,
         },
@@ -458,6 +497,7 @@ def render_combined_report(
     v13: dict[str, Any],
     follow_ups: dict[str, list[dict[str, Any]]],
     ucross: dict[str, Any] | None = None,
+    zaxis: dict[str, Any] | None = None,
 ) -> str:
     regime = unified.get("marketRegime") or v13.get("marketRegime") or {}
     featured, others = featured_split(v13)
@@ -465,23 +505,29 @@ def render_combined_report(
         f"# A股底部启动每日观察 {date}",
         "",
         f"- 大盘环境：{regime.get('label', '待核')}。{regime_status(regime)}。",
-        f"- 主推（右侧启动，{TRACK_DAYS_V13}日观察）：{len(featured)}只；底部观察池：{len(unified.get('selected', []))}只。",
+        f"- {DISPLAY_NAMES['v13']}（{TRACK_DAYS_V13}日观察）：{len(featured)}只；{DISPLAY_NAMES['v26']}：{len(unified.get('selected', []))}只；"
+        f"{DISPLAY_NAMES['ucross']}：{len((ucross or {}).get('selected', []))}只；{DISPLAY_NAMES['zaxis']}：{len((zaxis or {}).get('selected', []))}只。",
         "- 不足数量不放宽条件；均线只作为状态和压力字段。",
         *([f"- {intraday_check_text((ucross or {}).get('intradayCheck'))}"] if (ucross or {}).get("intradayCheck") else []),
         "",
-        f"## 主推：右侧启动（{TRACK_DAYS_V13}日观察）",
+        f"## {DISPLAY_NAMES['v13']}（{TRACK_DAYS_V13}日观察）",
         "",
     ]
-    lines += [block for index, item in enumerate(featured, 1) for block in (stock_block(item, index, "v13"), "")] or ["今日没有满足主推条件的股票。", ""]
-    lines += ["", "## 底部观察池（v2.6，观察、不作入场依据）", ""]
+    lines += [block for index, item in enumerate(featured, 1) for block in (stock_block(item, index, "v13"), "")] or [f"今日没有满足{DISPLAY_NAMES['v13']}条件的股票。", ""]
+    lines += ["", f"## {DISPLAY_NAMES['v26']}（观察、不作入场依据）", ""]
     lines += [block for index, item in enumerate(unified.get("selected", []), 1) for block in (stock_block(item, index, "v26"), "")] or ["当日无完整满足样本。", ""]
     ucross_items = (ucross or {}).get("selected", [])
-    lines += ["## 低位水下金叉观察（国电南瑞式）", "", UCROSS_NOTE, ""]
-    lines += [f"- {ucross_line(item)}" for item in ucross_items] or ["- 今日没有新出现的低位水下金叉。"]
+    lines += [f"## {DISPLAY_NAMES['ucross']}（国电南瑞式）", "", UCROSS_NOTE, ""]
+    lines += [f"- {ucross_line(item)}" for item in ucross_items] or [f"- 今日没有新出现的{DISPLAY_NAMES['ucross']}。"]
     lines.append("")
-    for title, key in ((f"右侧启动（{TRACK_DAYS_V13}日，不设破位）", "v13"), (f"底部观察池（{TRACK_DAYS}日，跌破5%失效）", "v26"),
-                       (f"低位水下金叉（{TRACK_DAYS_UCROSS}日，不设破位）", "ucross")):
-        lines += [f"## 跟踪：{title}（★=主推）", "", *[f"- {line}" for line in follow_up_lines(follow_ups.get(key, []), date)], ""]
+    zaxis_items = (zaxis or {}).get("selected", [])
+    lines += [f"## {DISPLAY_NAMES['zaxis']}", "", ZAXIS_NOTE, ""]
+    lines += [f"- {zaxis_line(item)}" for item in zaxis_items] or [f"- 今日没有新出现的{DISPLAY_NAMES['zaxis']}。"]
+    lines.append("")
+    for title, key in ((f"{DISPLAY_NAMES['v13']}（{TRACK_DAYS_V13}日，不设破位）", "v13"), (f"{DISPLAY_NAMES['v26']}（{TRACK_DAYS}日，跌破5%失效）", "v26"),
+                       (f"{DISPLAY_NAMES['ucross']}（{TRACK_DAYS_UCROSS}日，不设破位）", "ucross"),
+                       (f"{DISPLAY_NAMES['zaxis']}（{TRACK_DAYS_ZAXIS}日，不设破位）", "zaxis")):
+        lines += [f"## 跟踪：{title}", "", *[f"- {line}" for line in follow_up_lines(follow_ups.get(key, []), date)], ""]
     lines.append("本报告只用于观察池研究，不构成投资建议。")
     return "\n".join(lines) + "\n"
 
@@ -578,7 +624,7 @@ def main() -> None:
         delay_seconds=args.retry_delay_seconds,
     )
 
-    # Observation list; a failure here must not block the main report.
+    # Observation lists; a failure here must not block the main report.
     ucross_json = daily_dir / "ucross.json"
     try:
         run_command([
@@ -587,9 +633,18 @@ def main() -> None:
         ])
     except Exception as exc:
         print(f"[ucross] skipped: {exc}", file=sys.stderr)
+    zaxis_json = daily_dir / "zaxis.json"
+    try:
+        run_command([
+            sys.executable, str(ROOT / "scripts" / "research" / "zero_axis_live.py"),
+            "--as-of", date, "--days", "1", "--json-output", str(zaxis_json),
+        ])
+    except Exception as exc:
+        print(f"[zaxis] skipped: {exc}", file=sys.stderr)
     unified = load_json(unified_json)
     v13 = load_json(v13_json)
     ucross = load_json(ucross_json) if ucross_json.exists() else {"selected": []}
+    zaxis = load_json(zaxis_json) if zaxis_json.exists() else {"selected": []}
     # A quote snapshot that only covers part of the market shows up as thousands of "data"
     # rejections and an empty pick list (2026-11-02). Refuse to publish that as "0 stocks".
     stages = (unified.get("diagnostics") or {}).get("stageCounts") or {}
@@ -616,10 +671,12 @@ def main() -> None:
         print(f"skip: expected {date}, latest v1.3 market data is {v13_data_date}")
         return
 
-    annotate_report_due([unified.get("selected", []), v13.get("selected", []), ucross.get("selected", [])], data_date)
+    annotate_report_due([unified.get("selected", []), v13.get("selected", []), ucross.get("selected", []),
+                         zaxis.get("selected", [])], data_date)
     ucross["intradayCheck"] = intraday_check(data_date, {"v13": v13.get("selected", []), "ucross": ucross.get("selected", []),
-                                                          "v26": unified.get("selected", [])})
-    tracking = update_tracking([("v26", unified), ("v13", v13), ("ucross", ucross)], data_date)
+                                                          "v26": unified.get("selected", []),
+                                                          "zaxis": zaxis.get("selected", [])})
+    tracking = update_tracking([("v26", unified), ("v13", v13), ("ucross", ucross), ("zaxis", zaxis)], data_date)
     follow_ups = refresh_follow_ups(tracking, data_date)
     combined = {
         "generatedAt": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -627,10 +684,11 @@ def main() -> None:
         "v26": unified,
         "v13": v13,
         "ucross": ucross,
+        "zaxis": zaxis,
     }
     save_json(daily_dir / "combined.json", combined)
-    (daily_dir / "report.md").write_text(render_combined_report(data_date, unified, v13, follow_ups, ucross), encoding="utf-8")
-    card = build_feishu_card(data_date, unified, v13, follow_ups, ucross)
+    (daily_dir / "report.md").write_text(render_combined_report(data_date, unified, v13, follow_ups, ucross, zaxis), encoding="utf-8")
+    card = build_feishu_card(data_date, unified, v13, follow_ups, ucross, zaxis)
     save_json(daily_dir / "feishu-card.json", card)
     if args.backfill:
         save_json(daily_dir / "status.json", {"status": "backfilled", "dataDate": data_date})

@@ -32,7 +32,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 SKIP_GAP = 0.02     # high open >= 2%: historical 20-day excess -3.2% (2-3%) / -1.0% (>3%)
 CAUTION_GAP = 0.01  # high open 1-2%: -1.0%, median -2.5%
 WINDOW = (dt.time(9, 25), dt.time(9, 50))  # launchd runs missed jobs on wake; don't send stale checks
-LISTS = (("v13", "主推：右侧启动"), ("ucross", "低位水下金叉"), ("v26", "底部观察池（观察）"))
+LISTS = (("v13", "平台初破"), ("ucross", "水下金叉"), ("v26", "底部横盘"), ("zaxis", "零轴金叉"))
 
 
 def latest_report(before: str) -> tuple[str, dict[str, Any]] | None:
@@ -126,7 +126,7 @@ def card(result: dict[str, Any]) -> dict[str, Any]:
     caution = sum(r["verdict"].startswith("谨慎") for r in rows)
     elements = [{"tag": "markdown", "content": (
         f"**{result['signalDate']} 收盘选出，{result['date']} 集合竞价对比**｜行情：{result['source']}\n"
-        f"高开≥2% 放弃；高开1~2% 谨慎；其余按计划。依据：三类清单约1万笔回测，"
+        f"高开≥2% 放弃；高开1~2% 谨慎；其余按计划。依据：四类清单约1万笔回测，"
         f"高开2~3%的20日超额-3.2%，高开1~2% -1.0%，低开1~3% +3.6%。"
     )}]
     for key, title in LISTS:

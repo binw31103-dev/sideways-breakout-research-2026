@@ -645,7 +645,7 @@ def analyze_code(
         "code": code,
         "name": str(financial.get("SECURITY_NAME_ABBR") or code),
         "industry": str(financial.get("BOARD_NAME") or "待分类"),
-        "model": "v2.6统一观察",
+        "model": "底部横盘",
         "date": current["date"],
         "source": source,
         "state": state,
